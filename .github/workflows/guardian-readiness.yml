@@ -1,0 +1,43 @@
+name: Guardian Readiness Check
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "apps/guardian/**"
+      - "docker-compose.yml"
+
+jobs:
+  check-guardian-readiness:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Compose
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y docker-compose
+
+      - name: Build and start guardian (compose)
+        run: |
+          docker-compose up -d --build guardian
+
+      - name: Wait for readiness
+        run: |
+          for i in $(seq 1 30); do
+            if docker exec $(docker-compose ps -q guardian) curl -sf http://127.0.0.1:9120/healthz/ready >/dev/null 2>&1; then
+              echo "guardian ready"
+              docker-compose logs guardian --tail=50
+              exit 0
+            fi
+            echo "waiting for guardian readiness ($i/30)..."
+            sleep 2
+          done
+          echo "guardian readiness failed"
+          docker-compose logs guardian --tail=200
+          exit 1
+
+      - name: Tear down
+        if: always()
+        run: docker-compose down --remove-orphans

@@ -1,0 +1,16 @@
+[Unit]
+Description=OffSec Guardian readiness watchdog
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=offsec
+Group=offsec
+ExecStart=/opt/offsec-shield/scripts/guard-ready-watchdog.sh
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+

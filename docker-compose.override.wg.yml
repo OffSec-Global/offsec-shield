@@ -1,0 +1,7 @@
+version: "3.8"
+services:
+  guardian:
+    # Use this override only when the host WireGuard interface is present.
+    # Binds guardian to the WireGuard IP for mesh-only exposure.
+    ports:
+      - "10.21.0.2:9120:9120"

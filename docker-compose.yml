@@ -6,12 +6,17 @@ services:
       context: ./apps/portal-ext
       dockerfile: Dockerfile
     container_name: offsec-portal-ext
+    # Dev note: OFFSEC_DATA_DIR is bound to host ./data for easy receipt inspection; override or remove for prod.
     ports:
       - "9115:9115"
     environment:
       - RUST_LOG=info
       - OFFSEC_LISTEN=0.0.0.0:9115
       - VAULTMESH_URL=http://vaultmesh-portal:9110
+      - OFFSEC_DATA_DIR=/data
+      - OFFSEC_API_PORT=9115
+    volumes:
+      - ./data:/data
     depends_on:
       - vaultmesh-portal
     networks:
@@ -44,9 +49,17 @@ services:
       - GUARDIAN_CAP_AUD=offsec-portal
       - GUARDIAN_ALLOWED_ACTIONS=ingest,offsec.action.block_ip
       - GUARDIAN_CONFIG=/app/config/dev.toml
+      - OFFSEC_ACTION_SERVER_PORT=9120
     volumes:
       - /var/log:/host/logs:ro
       - ./config/dev.example.toml:/app/config/dev.toml:ro
+    # Guardian is internal by default. Do not publish ports in production.
+    healthcheck:
+      test: ["CMD-SHELL", "python - <<'PY'\nimport sys, urllib.request\ntry:\n    resp = urllib.request.urlopen('http://127.0.0.1:9120/healthz/ready', timeout=5)\n    sys.exit(0 if resp.status == 200 else 1)\nexcept Exception:\n    sys.exit(1)\nPY"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
     networks:
       - offsec
     depends_on:
@@ -54,8 +67,8 @@ services:
     restart: unless-stopped
 
   vaultmesh-portal:
-    # Dev stub so Compose doesn't fail on private VaultMesh image.
-    image: hashicorp/http-echo:0.2.3
+    # Dev stub so Compose doesn't fail on private VaultMesh image. Override VAULTMESH_PORTAL_IMAGE to point at the real image.
+    image: ${VAULTMESH_PORTAL_IMAGE:-hashicorp/http-echo:0.2.3}
     command: ["-listen=:9110", "-text=ok"]
     container_name: vaultmesh-portal
     ports:

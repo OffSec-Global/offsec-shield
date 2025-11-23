@@ -2,6 +2,7 @@ import re
 import uuid
 from datetime import datetime, timezone
 
+from guardian.detectors import touch_detection
 from guardian.detectors.base import BaseDetector
 from guardian.models import ThreatEvent
 
@@ -26,6 +27,7 @@ class BruteForceDetector(BaseDetector):
         if self.failed_attempts[ip] < self.threshold:
             return []
 
+        touch_detection()
         return [
             ThreatEvent(
                 id=str(uuid.uuid4()),
@@ -41,5 +43,5 @@ class BruteForceDetector(BaseDetector):
 
     @staticmethod
     def _extract_ip(line: str) -> str:
-        match = re.search(r"\\b(?:\\d{1,3}\\.){3}\\d{1,3}\\b", line)
+        match = re.search(r"\b(?:\d{1,3}\.){3}\d{1,3}\b", line)
         return match.group(0) if match else ""

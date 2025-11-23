@@ -1,24 +1,17 @@
-from .base import BaseDetector
-from .brute_force import BruteForceDetector
-from .scanner import ScannerDetector
-from .anomaly_simple import AnomalyDetector
+import time
+from typing import Optional
 
-DETECTOR_REGISTRY = {
-    "brute_force": BruteForceDetector,
-    "scanner": ScannerDetector,
-    "anomaly_simple": AnomalyDetector,
-}
+_last_detection_ts: Optional[float] = None
 
 
-def get_detector(name: str) -> BaseDetector | None:
-    detector_cls = DETECTOR_REGISTRY.get(name)
-    return detector_cls() if detector_cls else None
+def touch_detection() -> None:
+    """Record the timestamp of the most recent detection."""
+    global _last_detection_ts
+    _last_detection_ts = time.time()
 
 
-def load_detectors(enabled: list[str]) -> list[BaseDetector]:
-    detectors: list[BaseDetector] = []
-    for name in enabled:
-        detector = get_detector(name)
-        if detector:
-            detectors.append(detector)
-    return detectors
+def last_detection_age() -> Optional[float]:
+    """Return seconds since the last detection, or None if none recorded."""
+    if _last_detection_ts is None:
+        return None
+    return time.time() - _last_detection_ts

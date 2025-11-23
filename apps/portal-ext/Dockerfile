@@ -1,3 +1,4 @@
+# NOTE: Using nightly due to edition-2024 deps (e.g., base64ct/home). TODO: revert to a pinned stable toolchain when upstream stabilizes.
 FROM rustlang/rust:nightly AS builder
 WORKDIR /app
 

@@ -1,6 +1,29 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+usage() {
+  cat <<'EOF'
+Usage: mesh-verify.sh <peer_id> <receipt_id>
+
+Env:
+  API   Base URL for portal-ext mesh endpoint (default: http://localhost:9115)
+
+Example:
+  API=http://localhost:9115 ./mesh-verify.sh portal-node-a offsec-<receipt-id>
+EOF
+}
+
+if [ "${1:-}" = "-h" ] || [ "${1:-}" = "--help" ]; then
+  usage
+  exit 0
+fi
+
+if [ "$#" -ne 2 ]; then
+  echo "error: expected 2 arguments (peer_id receipt_id)"
+  usage
+  exit 1
+fi
+
 API=${API:-http://localhost:9115}
 PEER=$1
 RECEIPT_ID=$2
