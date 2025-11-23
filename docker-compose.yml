@@ -1,0 +1,81 @@
+version: "3.9"
+
+services:
+  portal-ext:
+    build:
+      context: ./apps/portal-ext
+      dockerfile: Dockerfile
+    container_name: offsec-portal-ext
+    ports:
+      - "9115:9115"
+    environment:
+      - RUST_LOG=info
+      - OFFSEC_LISTEN=0.0.0.0:9115
+      - VAULTMESH_URL=http://vaultmesh-portal:9110
+    depends_on:
+      - vaultmesh-portal
+    networks:
+      - offsec
+    restart: unless-stopped
+
+  ui:
+    build:
+      context: ./apps/ui
+      dockerfile: Dockerfile
+    container_name: offsec-ui
+    ports:
+      - "3001:3000"
+    environment:
+      - NEXT_PUBLIC_OFFSEC_API_URL=http://localhost:9115
+      - NODE_ENV=development
+    networks:
+      - offsec
+    restart: unless-stopped
+
+  guardian:
+    build:
+      context: ./apps/guardian
+      dockerfile: Dockerfile
+    container_name: offsec-guardian
+    environment:
+      - GUARDIAN_LOGLEVEL=info
+      - GUARDIAN_API_URL=http://portal-ext:9115
+      - GUARDIAN_CONFIG=/app/config/dev.toml
+    volumes:
+      - /var/log:/host/logs:ro
+      - ./config/dev.example.toml:/app/config/dev.toml:ro
+    networks:
+      - offsec
+    depends_on:
+      - portal-ext
+    restart: unless-stopped
+
+  vaultmesh-portal:
+    image: vaultmesh/portal:latest
+    container_name: vaultmesh-portal
+    ports:
+      - "9110:9110"
+    environment:
+      - PORTAL_ENV=dev
+    networks:
+      - offsec
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:alpine
+    container_name: offsec-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./infra/nginx/offsec-shield.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - ui
+      - portal-ext
+    networks:
+      - offsec
+    restart: unless-stopped
+
+networks:
+  offsec:
+    driver: bridge

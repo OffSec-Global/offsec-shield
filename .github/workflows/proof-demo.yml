@@ -1,0 +1,63 @@
+name: OffSec Shield Demo Proof
+
+on:
+  push:
+    paths:
+      - "apps/portal-ext/**"
+      - "apps/ui/**"
+      - "apps/root-watcher/**"
+      - "apps/proof-verify/**"
+      - "demo/**"
+  pull_request:
+
+jobs:
+  demo-proof:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Poetry
+        run: pip install poetry
+
+      - name: Build proof verifier
+        working-directory: apps/proof-verify
+        run: cargo build --release
+
+      - name: Install UI deps
+        working-directory: apps/ui
+        run: npm install
+
+      - name: Install guardian deps
+        working-directory: apps/guardian
+        run: poetry install
+
+      - name: Run demo with proof verification
+        env:
+          OFFSEC_DATA_DIR: ./data
+          OFFSEC_API_PORT: 9115
+          OFFSEC_UI_PORT: 3001
+          OFFSEC_JWT_HS256_SECRET: ci-secret
+          OFFSEC_GUARDIAN_ID: guardian-ci
+          OFFSEC_SKIP_UI: "1"
+          OFFSEC_SKIP_GUARDIAN: "1"
+          PATH: ${{ github.workspace }}/apps/proof-verify/target/release:${{ env.PATH }}
+        run: |
+          chmod +x demo/run_demo.sh
+          ./demo/run_demo.sh

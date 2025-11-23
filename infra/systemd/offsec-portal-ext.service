@@ -1,0 +1,19 @@
+[Unit]
+Description=OffSec Portal Extension - VaultMesh Integration
+After=network.target
+
+[Service]
+Type=simple
+User=offsec
+WorkingDirectory=/opt/offsec-portal-ext
+Environment="RUST_LOG=info"
+ExecStart=/opt/offsec-portal-ext/target/release/portal-ext
+Restart=always
+RestartSec=5
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=offsec-portal-ext
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "offsec-root-watcher"
+version = "0.1.0"
+description = "Root watcher daemon for OffSec Shield (anchors ROOT.txt and notifies portal-ext)"
+authors = ["OffSec Shield Contributors <root@offsec.global>"]
+packages = [{ include = "root_watcher" }]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+requests = "^2.32.3"
+
+[tool.poetry.scripts]
+root-watcher = "root_watcher.main:main"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

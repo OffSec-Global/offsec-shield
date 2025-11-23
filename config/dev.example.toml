@@ -1,0 +1,32 @@
+# OffSec Shield - Development Configuration
+# Copy to dev.toml and customize
+
+[server]
+listen = "0.0.0.0:9115"
+log_level = "info"
+
+[vaultmesh]
+# VaultMesh Portal URL for capability validation and receipt emission
+portal_url = "http://localhost:9110"
+timeout_secs = 30
+
+[guardian]
+# Guardian API endpoint for event ingestion
+api_url = "http://localhost:8001"
+id = "guardian-dev"
+capability_token = "dev-token-12345" # fallback if JWT is not configured
+# JWT auth (preferred): set GUARDIAN_JWT_PRIVATE_KEY or point to a key file
+jwt_private_key_path = "config/dev-guardian.ed25519"
+jwt_hs256_secret = "dev-secret"
+
+[detectors]
+enabled = ["brute_force", "scanner", "anomaly"]
+
+[actions]
+# Actions allowed when capability permits
+allowed = ["block_ip", "alert_human", "quarantine"]
+require_approval = true
+
+[logging]
+format = "json"
+level = "debug"

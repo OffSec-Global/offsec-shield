@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: offsec-guardian
+  labels:
+    app: offsec-guardian
+spec:
+  selector:
+    matchLabels:
+      app: offsec-guardian
+  template:
+    metadata:
+      labels:
+        app: offsec-guardian
+    spec:
+      serviceAccountName: offsec-guardian
+      containers:
+        - name: guardian
+          image: ghcr.io/vaultmesh/offsec-guardian:dev
+          env:
+            - name: GUARDIAN_CONFIG
+              value: /etc/offsec/dev.toml
+          volumeMounts:
+            - name: host-logs
+              mountPath: /host/logs
+              readOnly: true
+            - name: guardian-config
+              mountPath: /etc/offsec
+              readOnly: true
+      volumes:
+        - name: host-logs
+          hostPath:
+            path: /var/log
+        - name: guardian-config
+          configMap:
+            name: offsec-guardian-config

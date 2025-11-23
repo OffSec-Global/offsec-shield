@@ -1,0 +1,19 @@
+[Unit]
+Description=OffSec Guardian - Threat Detection Agent
+After=network.target
+
+[Service]
+Type=simple
+User=guardian
+WorkingDirectory=/opt/offsec-guardian
+Environment="GUARDIAN_CONFIG=/etc/offsec/guardian.toml"
+ExecStart=/usr/bin/poetry run guardian run
+Restart=always
+RestartSec=5
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=offsec-guardian
+
+[Install]
+WantedBy=multi-user.target

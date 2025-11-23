@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: offsec-portal-ext
+  labels:
+    app: offsec-portal-ext
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: offsec-portal-ext
+  template:
+    metadata:
+      labels:
+        app: offsec-portal-ext
+    spec:
+      containers:
+        - name: portal-ext
+          image: ghcr.io/vaultmesh/offsec-portal-ext:dev
+          ports:
+            - containerPort: 9115
+          env:
+            - name: RUST_LOG
+              value: info
+            - name: OFFSEC_LISTEN
+              value: 0.0.0.0:9115
+            - name: VAULTMESH_URL
+              value: http://vaultmesh-portal:9110
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 9115
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 9115
+            initialDelaySeconds: 10
+            periodSeconds: 15
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: offsec-ui
+  labels:
+    app: offsec-ui
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: offsec-ui
+  template:
+    metadata:
+      labels:
+        app: offsec-ui
+    spec:
+      containers:
+        - name: ui
+          image: ghcr.io/vaultmesh/offsec-ui:dev
+          ports:
+            - containerPort: 3000
+          env:
+            - name: NEXT_PUBLIC_OFFSEC_API_URL
+              value: http://offsec-portal-ext:9115
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10

@@ -1,0 +1,14 @@
+{
+  "name": "offsec-mcp-toolbox",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Local MCP utilities for OffSec Shield (docker, HTTP probe, OSV)",
+  "license": "MIT",
+  "bin": {
+    "offsec-mcp-toolbox": "./toolbox.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.22.0"
+  }
+}
