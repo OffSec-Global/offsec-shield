@@ -24,3 +24,22 @@ export interface ActionUpdate {
   created_at?: string;
   executed_at?: string;
 }
+
+export interface ActionRequested {
+  action_id: string;
+  action_type: string;
+  target?: Record<string, unknown>;
+  reason?: string;
+  requested_by?: string;
+  ts?: string;
+  receipt_id?: string;
+}
+
+export interface ActionResult {
+  action_id: string;
+  action_type: string;
+  status: string;
+  details?: Record<string, unknown>;
+  ts?: string;
+  receipt_id?: string;
+}

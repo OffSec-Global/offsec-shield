@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { connectWebSocket } from '@/lib/ws-client';
 import { getCurrentRoot, getReceipts } from '@/lib/api';
-import { ActionUpdate, ThreatEvent } from '@/types/events';
+import { ActionRequested, ActionResult, ActionUpdate, ThreatEvent } from '@/types/events';
 import { Receipt } from '@/types/receipts';
 import { ShieldStatus } from '@/components/ShieldStatus';
 import { ThreatStream } from '@/components/ThreatStream';
@@ -41,6 +41,32 @@ export default function Home() {
             return [msg.data as ActionUpdate, ...others].slice(0, 50);
           });
         }
+        if (msg.type === 'offsec.action.requested') {
+          const data = msg.data as ActionRequested;
+          const update: ActionUpdate = {
+            id: data.action_id,
+            action: data.action_type,
+            status: 'requested',
+            created_at: data.ts,
+          };
+          setActions((prev) => {
+            const others = prev.filter((a) => a.id !== update.id);
+            return [update, ...others].slice(0, 50);
+          });
+        }
+        if (msg.type === 'offsec.action.result') {
+          const data = msg.data as ActionResult;
+          const update: ActionUpdate = {
+            id: data.action_id,
+            action: data.action_type,
+            status: data.status,
+            executed_at: data.ts,
+          };
+          setActions((prev) => {
+            const others = prev.filter((a) => a.id !== update.id);
+            return [update, ...others].slice(0, 50);
+          });
+        }
         if (msg.type === 'receipt') {
           setReceipts((prev) => [msg.data as Receipt, ...prev].slice(0, 50));
         }
@@ -74,7 +100,7 @@ export default function Home() {
       />
       <div className="grid">
         <ThreatStream events={events} />
-        <ActionPanel actions={actions} />
+        <ActionPanel actions={actions} suggestedTarget={events.find((e) => e.affected?.length)?.affected?.[0]} />
         <ProofLedger receipts={receipts} lastAnchor={lastAnchor} currentRoot={currentRoot} />
       </div>
     </div>

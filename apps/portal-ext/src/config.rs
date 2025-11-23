@@ -8,6 +8,7 @@ pub struct OffsecConfig {
     pub jwt_public_key_pem: Option<String>,
     pub jwt_hs256_secret: Option<String>,
     pub data_dir: String,
+    pub guardian_url: Option<String>,
 }
 
 impl OffsecConfig {
@@ -23,6 +24,7 @@ impl OffsecConfig {
                 .ok()
                 .or_else(|| Some("dev-secret".to_string())),
             data_dir: env::var("OFFSEC_DATA_DIR").unwrap_or_else(|_| "data".to_string()),
+            guardian_url: env::var("OFFSEC_GUARDIAN_URL").ok(),
         }
     }
 }

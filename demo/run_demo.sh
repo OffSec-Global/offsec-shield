@@ -12,6 +12,7 @@ OFFSEC_JWT_HS256_SECRET="${OFFSEC_JWT_HS256_SECRET:-dev-secret}"
 OFFSEC_GUARDIAN_ID="${OFFSEC_GUARDIAN_ID:-guardian-demo}"
 OFFSEC_SKIP_UI="${OFFSEC_SKIP_UI:-0}"
 OFFSEC_SKIP_GUARDIAN="${OFFSEC_SKIP_GUARDIAN:-0}"
+OFFSEC_GUARDIAN_URL="${OFFSEC_GUARDIAN_URL:-http://localhost:9120}"
 
 UI_PID=""
 GUARDIAN_PID=""
@@ -31,6 +32,7 @@ echo "[demo] Starting portal-ext (cargo run) ..."
   cd "$ROOT_DIR/apps/portal-ext"
   OFFSEC_DATA_DIR="$OFFSEC_DATA_DIR" \
   OFFSEC_JWT_HS256_SECRET="$OFFSEC_JWT_HS256_SECRET" \
+  OFFSEC_GUARDIAN_URL="$OFFSEC_GUARDIAN_URL" \
   OFFSEC_CAP_AUD="offsec-portal" \
   cargo run
 ) >"$OFFSEC_DATA_DIR/portal-ext.log" 2>&1 &
@@ -88,7 +90,7 @@ claims = {
     "aud": "offsec-portal",
     "iat": now,
     "exp": now + 300,
-    "actions": ["ingest"],
+    "actions": ["ingest", "offsec.action.block_ip"],
     "nonce": "demo-nonce-001"
 }
 print(jwt.encode(claims, secret, algorithm="HS256"))
@@ -109,6 +111,21 @@ curl -s -X POST "http://localhost:${OFFSEC_API_PORT}/offsec/ingest" \
     \"metadata\": {\"attempts\": 7}
   }" >/dev/null || true
 
+sleep 2
+
+echo "[demo] Issuing action /offsec/action/apply (block_ip) ..."
+ACTION_ID="act-$(date +%s)"
+curl -s -X POST "http://localhost:${OFFSEC_API_PORT}/offsec/action/apply" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d "{
+    \"action_id\": \"${ACTION_ID}\",
+    \"action_type\": \"offsec.action.block_ip\",
+    \"target\": {\"ip\": \"192.0.2.123\"},
+    \"reason\": \"Demo block_ip from run_demo.sh\",
+    \"requested_by\": \"demo-operator\",
+    \"ts\": \"$(date -Iseconds)\"
+  }" >/dev/null || true
 sleep 2
 
 echo "[demo] Fetching latest receipt id via API..."

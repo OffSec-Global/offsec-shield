@@ -56,7 +56,7 @@ jobs:
           OFFSEC_JWT_HS256_SECRET: ci-secret
           OFFSEC_GUARDIAN_ID: guardian-ci
           OFFSEC_SKIP_UI: "1"
-          OFFSEC_SKIP_GUARDIAN: "1"
+          OFFSEC_SKIP_GUARDIAN: "0"
           PATH: ${{ github.workspace }}/apps/proof-verify/target/release:${{ env.PATH }}
         run: |
           chmod +x demo/run_demo.sh

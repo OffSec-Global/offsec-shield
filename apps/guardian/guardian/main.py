@@ -2,12 +2,14 @@ import asyncio
 import logging
 import sys
 import uuid
+import threading
 from datetime import datetime, timezone
 
 from guardian.client import PortalClient
 from guardian.config import config
 from guardian.detectors import load_detectors
 from guardian.models import ActionRequest
+from guardian.action_server import start_action_server
 
 logging.basicConfig(
     level=logging.INFO,
@@ -24,11 +26,15 @@ class Guardian:
 
     async def run(self):
         logger.info("Guardian starting with detectors: %s", [d.name for d in self.detectors])
+        server = start_action_server()
+        server_thread = threading.Thread(target=server.serve_forever, daemon=True)
+        server_thread.start()
         try:
             await self._demo_ingestion()
         except KeyboardInterrupt:
             logger.info("Guardian stopping...")
         finally:
+            server.shutdown()
             await self.client.close()
 
     async def _demo_ingestion(self):

@@ -1,6 +1,8 @@
 pub mod action;
 pub mod anchor;
 pub mod ingest;
+pub mod action_apply;
+pub mod action_update;
 pub mod proof;
 
 use crate::{receipts, ws, AppState};
@@ -14,6 +16,8 @@ pub fn router(state: AppState) -> Router {
         .route("/healthz", get(health_check))
         .route("/offsec/ingest", post(ingest::ingest_event))
         .route("/offsec/action", post(action::submit_action))
+        .route("/offsec/action/apply", post(action_apply::apply))
+        .route("/offsec/action/update", post(action_update::update))
         .route("/offsec/anchor", post(anchor::anchor))
         .route("/offsec/receipts", get(receipts::list_receipts))
         .route("/offsec/root", get(receipts::current_root))

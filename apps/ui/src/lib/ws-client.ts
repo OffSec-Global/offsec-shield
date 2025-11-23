@@ -1,10 +1,12 @@
-import { ActionUpdate, ThreatEvent } from '@/types/events';
+import { ActionRequested, ActionResult, ActionUpdate, ThreatEvent } from '@/types/events';
 import { Receipt } from '@/types/receipts';
 
 export type OffsecMessage =
   | { type: 'threat_event'; data: ThreatEvent }
   | { type: 'action_update'; data: ActionUpdate }
   | { type: 'receipt'; data: Receipt }
+  | { type: 'offsec.action.requested'; data: ActionRequested }
+  | { type: 'offsec.action.result'; data: ActionResult }
   | { type: string; data: unknown };
 
 const API_URL = process.env.NEXT_PUBLIC_OFFSEC_API_URL || 'http://localhost:9115';
