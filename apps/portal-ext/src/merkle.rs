@@ -76,7 +76,11 @@ impl MerkleFrontier {
             }
 
             let is_right = idx % 2 == 1;
-            let sibling_idx = if is_right { idx.saturating_sub(1) } else { idx + 1 };
+            let sibling_idx = if is_right {
+                idx.saturating_sub(1)
+            } else {
+                idx + 1
+            };
 
             if sibling_idx < level_nodes.len() {
                 let sibling = level_nodes[sibling_idx].clone();

@@ -1,4 +1,12 @@
-import { ActionRequested, ActionResult, ActionUpdate, ThreatEvent } from '@/types/events';
+import {
+  ActionRequested,
+  ActionResult,
+  ActionUpdate,
+  ThreatEvent,
+  MeshProofReceived,
+  MeshRootAnnounce,
+  AnchorEvent,
+} from '@/types/events';
 import { Receipt } from '@/types/receipts';
 
 export type OffsecMessage =
@@ -7,6 +15,9 @@ export type OffsecMessage =
   | { type: 'receipt'; data: Receipt }
   | { type: 'offsec.action.requested'; data: ActionRequested }
   | { type: 'offsec.action.result'; data: ActionResult }
+  | { type: 'offsec.anchor'; data: AnchorEvent }
+  | { type: 'mesh.root_announce'; data: MeshRootAnnounce }
+  | { type: 'mesh.proof_received'; data: MeshProofReceived }
   | { type: string; data: unknown };
 
 const API_URL = process.env.NEXT_PUBLIC_OFFSEC_API_URL || 'http://localhost:9115';

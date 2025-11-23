@@ -7,6 +7,14 @@ pub struct ThreatEvent {
     pub severity: String,
     pub event_type: String,
     pub source: String,
+    #[serde(default)]
+    pub source_host: Option<String>,
+    #[serde(default)]
+    pub source_role: Option<String>,
+    #[serde(default)]
+    pub guardian_id: Option<String>,
+    #[serde(default)]
+    pub guardian_tags: Vec<String>,
     pub description: String,
     pub affected: Vec<String>,
     #[serde(default)]
@@ -21,6 +29,12 @@ pub struct ActionRequest {
     pub target: String,
     pub reason: String,
     pub created_at: String,
+    #[serde(default)]
+    pub guardian_id: Option<String>,
+    #[serde(default)]
+    pub guardian_tags: Vec<String>,
+    #[serde(default)]
+    pub requested_by: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -28,6 +42,14 @@ pub struct ActionUpdate {
     pub id: String,
     pub action: String,
     pub status: String,
+    #[serde(default)]
+    pub guardian_id: Option<String>,
+    #[serde(default)]
+    pub guardian_tags: Vec<String>,
+    #[serde(default)]
+    pub created_at: String,
+    #[serde(default)]
+    pub executed_at: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

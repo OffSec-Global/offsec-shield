@@ -6,7 +6,7 @@ from typing import List, Optional
 
 import jwt
 
-from guardian.config import config
+from guardian.config import config, guardian_id as resolve_guardian_id
 
 
 class CapabilityIssuer:
@@ -66,7 +66,7 @@ def load_private_key() -> Optional[str]:
 
 
 def build_capability_issuer() -> CapabilityIssuer:
-    guardian_id = config.get("guardian.id", "guardian-dev")
+    guardian_id = resolve_guardian_id()
     allowed_actions = config.get("actions.allowed", [])
     hs_secret = os.getenv(
         "GUARDIAN_JWT_HS256_SECRET",

@@ -11,6 +11,7 @@ import httpx
 from guardian.actions.alert_human import AlertHumanAction
 from guardian.actions.block_ip import BlockIPAction
 from guardian.actions.quarantine import QuarantineAction
+from guardian.config import guardian_id, guardian_tags
 
 logger = logging.getLogger(__name__)
 
@@ -23,14 +24,21 @@ ACTION_MAP = {
     "offsec.action.alert_human": AlertHumanAction(),
 }
 
+GUARDIAN_ID = guardian_id()
+GUARDIAN_TAGS = guardian_tags()
+
 
 async def send_update(req: Dict[str, Any], status: str, details: Dict[str, Any]):
+    gid = req.get("guardian_id") or GUARDIAN_ID
+    tags = req.get("guardian_tags") or GUARDIAN_TAGS
     payload = {
         "action_id": req.get("action_id"),
         "action_type": req.get("action_type"),
         "status": status,
         "details": details,
         "ts": datetime.now(timezone.utc).isoformat(),
+        "guardian_id": gid,
+        "guardian_tags": tags,
     }
     url = f"{PORTAL_URL}/offsec/action/update"
     async with httpx.AsyncClient(timeout=5.0) as client:
@@ -42,11 +50,15 @@ async def send_update(req: Dict[str, Any], status: str, details: Dict[str, Any])
 
 async def process_action(req: Dict[str, Any]) -> Dict[str, Any]:
     action_type = req.get("action_type")
+    req.setdefault("guardian_id", GUARDIAN_ID)
+    req.setdefault("guardian_tags", GUARDIAN_TAGS)
     target = req.get("target", {}) or {}
     target_ip = target.get("ip", "")
     action = ACTION_MAP.get(action_type)
     if not action:
-        await send_update(req, "failed", {"error": f"unsupported action_type {action_type}"})
+        await send_update(
+            req, "failed", {"error": f"unsupported action_type {action_type}"}
+        )
         return {"status": "failed", "details": {"error": "unsupported action"}}
 
     try:

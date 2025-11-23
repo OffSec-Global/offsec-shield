@@ -26,6 +26,10 @@ pub struct ActionRequestPayload {
     #[serde(default)]
     pub requested_by: Option<String>,
     pub ts: String,
+    #[serde(default)]
+    pub guardian_id: Option<String>,
+    #[serde(default)]
+    pub guardian_tags: Vec<String>,
 }
 
 #[derive(Debug, Serialize)]
@@ -58,6 +62,22 @@ pub async fn apply(
         return Err((code, Json(err)));
     }
 
+    let mut req = req;
+    let guardian_id = req
+        .guardian_id
+        .clone()
+        .unwrap_or_else(|| claims.sub.clone());
+    if req.guardian_tags.is_empty() {
+        if let Some(tags_val) = claims.extra.get("tags").and_then(|v| v.as_array()) {
+            let tags: Vec<String> = tags_val
+                .iter()
+                .filter_map(|v| v.as_str().map(|s| s.to_string()))
+                .collect();
+            req.guardian_tags = tags;
+        }
+    }
+    req.guardian_id = Some(guardian_id.clone());
+
     // Receipt for action request
     let payload = json!({
         "action_id": req.action_id,
@@ -66,17 +86,25 @@ pub async fn apply(
         "reason": req.reason,
         "requested_by": req.requested_by,
         "ts": req.ts,
+        "guardian_id": guardian_id,
+        "guardian_tags": req.guardian_tags,
     });
-    let receipt =
-        write_receipt(&state, "offsec.action.request", &claims.sub, &payload).map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse {
-                    error: "receipt_write_failed".to_string(),
-                    details: Some(e),
-                }),
-            )
-        })?;
+    let receipt = write_receipt(
+        &state,
+        "offsec.action.request",
+        req.guardian_id.as_deref(),
+        &req.guardian_tags,
+        &payload,
+    )
+    .map_err(|e| {
+        (
+            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse {
+                error: "receipt_write_failed".to_string(),
+                details: Some(e),
+            }),
+        )
+    })?;
 
     // Broadcast WS
     state.ws.send_json(&json!({
@@ -88,6 +116,8 @@ pub async fn apply(
             "reason": req.reason,
             "requested_by": req.requested_by,
             "ts": req.ts,
+            "guardian_id": req.guardian_id,
+            "guardian_tags": req.guardian_tags,
             "receipt_id": receipt.id,
         }
     }));

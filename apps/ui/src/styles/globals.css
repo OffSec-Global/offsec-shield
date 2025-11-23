@@ -396,3 +396,128 @@ button:active {
   background: rgba(0, 212, 0, 0.1);
   box-shadow: 0 0 0 1px rgba(0, 212, 0, 0.3);
 }
+
+.mesh-grid {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.mesh-section-title {
+  font-size: 12px;
+  color: var(--terminal-green-light);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 6px;
+}
+
+.mesh-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mesh-item {
+  border: 1px solid #1f2937;
+  border-radius: 4px;
+  padding: 6px 8px;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.mesh-peer {
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--text-light);
+}
+
+.mesh-root {
+  font-size: 11px;
+  margin-top: 3px;
+}
+
+.mesh-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 4px;
+  font-size: 10px;
+}
+
+.mesh-ts {
+  color: #888;
+}
+
+.mesh-badge {
+  padding: 2px 6px;
+  border-radius: 999px;
+  border: 1px solid #4b5563;
+  font-size: 10px;
+  color: #9ca3af;
+}
+
+.mesh-badge.anchored {
+  border-color: var(--terminal-green);
+  color: var(--terminal-green-light);
+}
+
+.mesh-event {
+  margin-left: 4px;
+  color: var(--terminal-green-light);
+  font-size: 10px;
+}
+
+.mesh-proof-row .mesh-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.mesh-proof-row {
+  cursor: pointer;
+}
+
+.mesh-proof-row.active {
+  border-color: var(--terminal-green);
+  box-shadow: 0 0 0 1px rgba(0, 212, 0, 0.25);
+}
+
+.mesh-download-btn {
+  background: transparent;
+  border: 1px solid var(--terminal-green);
+  color: var(--terminal-green-light);
+  padding: 2px 6px;
+  font-size: 10px;
+  cursor: pointer;
+  border-radius: 999px;
+  transition: all 0.15s ease;
+}
+
+.mesh-download-btn:hover {
+  background: rgba(0, 212, 0, 0.08);
+  box-shadow: 0 0 0 1px rgba(0, 212, 0, 0.4);
+}
+
+.mesh-explorer-wrapper {
+  margin-top: 10px;
+}
+
+.mesh-explorer-wrapper {
+  margin-top: 8px;
+}
+
+/* highlight selected proof */
+.mesh-item.active {
+  box-shadow: 0 0 0 1px rgba(0, 212, 0, 0.2);
+  border-left-color: var(--terminal-green-light);
+}
+
+/* proof meta small tweak */
+.mesh-proof-meta {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}

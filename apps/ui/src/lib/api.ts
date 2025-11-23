@@ -14,8 +14,11 @@ export async function submitAction(action: ActionUpdate) {
   return response.json();
 }
 
-export async function getReceipts(): Promise<Receipt[]> {
-  const response = await fetch(`${API_URL}/offsec/receipts`);
+export async function getReceipts(guardianId?: string): Promise<Receipt[]> {
+  const url = guardianId
+    ? `${API_URL}/offsec/receipts?guardian_id=${encodeURIComponent(guardianId)}`
+    : `${API_URL}/offsec/receipts`;
+  const response = await fetch(url);
   if (!response.ok) throw new Error('Failed to fetch receipts');
   return response.json();
 }
@@ -31,6 +34,8 @@ export type ActionRequestPayload = {
   reason?: string;
   requested_by?: string;
   ts: string;
+  guardian_id?: string;
+  guardian_tags?: string[];
 };
 
 export async function applyAction(payload: ActionRequestPayload) {

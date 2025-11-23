@@ -12,6 +12,10 @@ pub struct ActionUpdatePayload {
     #[serde(default)]
     pub details: serde_json::Value,
     pub ts: String,
+    #[serde(default)]
+    pub guardian_id: Option<String>,
+    #[serde(default)]
+    pub guardian_tags: Vec<String>,
 }
 
 pub async fn update(
@@ -24,18 +28,26 @@ pub async fn update(
         "status": update.status,
         "details": update.details,
         "ts": update.ts,
+        "guardian_id": update.guardian_id,
+        "guardian_tags": update.guardian_tags,
     });
 
-    let receipt =
-        write_receipt(&state, "offsec.action.result", "guardian", &payload).map_err(|e| {
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse {
-                    error: "receipt_write_failed".to_string(),
-                    details: Some(e),
-                }),
-            )
-        })?;
+    let receipt = write_receipt(
+        &state,
+        "offsec.action.result",
+        update.guardian_id.as_deref(),
+        &update.guardian_tags,
+        &payload,
+    )
+    .map_err(|e| {
+        (
+            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse {
+                error: "receipt_write_failed".to_string(),
+                details: Some(e),
+            }),
+        )
+    })?;
 
     state.ws.send_json(&json!({
         "type": "offsec.action.result",
@@ -45,6 +57,8 @@ pub async fn update(
             "status": update.status,
             "details": update.details,
             "ts": update.ts,
+            "guardian_id": update.guardian_id,
+            "guardian_tags": update.guardian_tags,
             "receipt_id": receipt.id,
         }
     }));

@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import blake from 'blakejs';
 import type { Receipt } from '@/types/receipts';
+import type { AnchorEvent } from '@/types/events';
 
 export type PathElement = {
   sibling: string;
@@ -11,14 +12,6 @@ export type MerkleProof = {
   leaf: string;
   path: PathElement[];
   root: string;
-};
-
-type AnchorEvent = {
-  root: string;
-  ts: string;
-  chain: string;
-  txid: string;
-  status: string;
 };
 
 type ProofBundle = {
@@ -48,7 +41,7 @@ export default function MerkleExplorer({ proof, anchor, receipt }: Props) {
       const combined =
         step.position === 'left' ? `${step.sibling}${hash}` : `${hash}${step.sibling}`;
 
-      hash = blake.blake2bHex(combined, null, 32);
+      hash = blake.blake2bHex(combined, undefined, 32);
     }
 
     return hash;

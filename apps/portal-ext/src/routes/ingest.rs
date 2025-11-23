@@ -42,13 +42,34 @@ pub async fn ingest_event(
         return Err((code, Json(err)));
     }
 
+    let mut event = event;
+
+    if event.guardian_id.is_none() {
+        event.guardian_id = Some(claims.sub.clone());
+    }
+    if event.guardian_tags.is_empty() {
+        if let Some(tags_val) = claims.extra.get("tags").and_then(|v| v.as_array()) {
+            let tags: Vec<String> = tags_val
+                .iter()
+                .filter_map(|v| v.as_str().map(|s| s.to_string()))
+                .collect();
+            event.guardian_tags = tags;
+        }
+    }
+
     let payload = json!({
         "type": "threat_event",
         "data": event
     });
     state.ws.send_json(&payload);
 
-    match write_receipt(&state, "offsec.ingest", &claims.sub, &payload) {
+    match write_receipt(
+        &state,
+        "offsec.ingest",
+        event.guardian_id.as_deref(),
+        &event.guardian_tags,
+        &payload,
+    ) {
         Ok(receipt) => {
             state
                 .ws

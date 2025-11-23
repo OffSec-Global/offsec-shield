@@ -3,14 +3,7 @@ import { Panel } from './ui/Panel';
 import { Receipt } from '@/types/receipts';
 import MerkleExplorer, { MerkleProof } from './MerkleExplorer';
 import { BadgeAnchor } from './ui/BadgeAnchor';
-
-type AnchorEvent = {
-  root: string;
-  ts: string;
-  chain: string;
-  txid: string;
-  status: string;
-};
+import type { AnchorEvent } from '@/types/events';
 
 type Props = {
   receipts: Receipt[];
@@ -53,6 +46,7 @@ export function ProofLedger({ receipts, lastAnchor, currentRoot }: Props) {
               const isSelected = selected?.id === receipt.id;
               const when = receipt.ts || receipt.timestamp || '–';
               const label = receipt.event_type || 'receipt';
+              const guardian = receipt.guardian_id || receipt.agent_id;
 
               return (
                 <li
@@ -62,6 +56,11 @@ export function ProofLedger({ receipts, lastAnchor, currentRoot }: Props) {
                 >
                   <div className="receipt-title">{label}</div>
                   <div className="receipt-meta">{when}</div>
+                  {guardian ? (
+                    <div className="receipt-meta">
+                      Guardian: <span className="pill subtle">{guardian}</span>
+                    </div>
+                  ) : null}
                   <div className="receipt-hash mono">{receipt.hash}</div>
                 </li>
               );

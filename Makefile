@@ -7,9 +7,10 @@ tools-install:
 	@echo "Installing Node.js (if not present)..."
 	@command -v node >/dev/null 2>&1 || (curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash - && sudo apt-get install -y nodejs)
 	@echo "Installing Python 3.10+ (if not present)..."
-	@command -v python3 >/dev/null 2>&1 || sudo apt-get install -y python3 python3-pip python3-venv
+	@command -v python3 >/dev/null 2>&1 || { command -v apt-get >/dev/null 2>&1 && sudo apt-get install -y python3 python3-pip python3-venv || { command -v pacman >/dev/null 2>&1 && sudo pacman -Sy --noconfirm python python-pip python-virtualenv || true; }; }
+	@command -v pip3 >/dev/null 2>&1 || { command -v pacman >/dev/null 2>&1 && sudo pacman -Sy --noconfirm python-pip || { command -v apt-get >/dev/null 2>&1 && sudo apt-get install -y python3-pip || python3 -m ensurepip --upgrade --default-pip; }; }
 	@echo "Installing Poetry..."
-	@command -v poetry >/dev/null 2>&1 || pip3 install poetry
+	@command -v poetry >/dev/null 2>&1 || { command -v pacman >/dev/null 2>&1 && sudo pacman -Sy --noconfirm python-poetry || python3 -m pip install --user --upgrade poetry; }
 	@echo "Installing Docker (if not present)..."
 	@command -v docker >/dev/null 2>&1 || curl -fsSL https://get.docker.com | sh
 	@echo "✓ Tools installed"

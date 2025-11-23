@@ -316,4 +316,15 @@ Result: eventual consistency (not at-least-once for receipts yet)
 
 ---
 
+## Multi-Guardian / Cluster Mode (Ops Edition)
+
+- Each Guardian MUST set a unique `GUARDIAN_ID`/`OFFSEC_GUARDIAN_ID` (e.g., `guardian-node-$(hostname)`) and may set `GUARDIAN_TAGS` (e.g., `bastion,eu-west-1`).
+- Guardians include `guardian_id` + `guardian_tags` on every event and action update; Portal-ext stores/broadcasts them; UI can filter by guardian.
+- Centralized Portal-ext + UI can serve many Guardians; receipts carry the Guardian identity for proof export/verification.
+- K8s hint: run Guardians as a DaemonSet (one per node) and Portal-ext + UI as a Deployment/Service. Example env per pod:
+  - `GUARDIAN_ID=guardian-node-$(NODE_NAME)`
+  - `GUARDIAN_TAGS=bastion,$(REGION)`
+  - `OFFSEC_PORTAL_URL=http://portal-ext:9115`
+  - `OFFSEC_JWT_HS256_SECRET=<shared or keypair>`
+
 **See SPEC.md for data models, configuration, and security notes.**

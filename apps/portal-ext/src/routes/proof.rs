@@ -66,10 +66,19 @@ pub async fn proof(
     let anchor = match fs::read_to_string(&anchor_path) {
         Ok(contents) => match serde_json::from_str::<serde_json::Value>(&contents) {
             Ok(v) => Some(AnchorBundle {
-                root: v.get("root").and_then(|x| x.as_str()).map(|s| s.to_string()),
+                root: v
+                    .get("root")
+                    .and_then(|x| x.as_str())
+                    .map(|s| s.to_string()),
                 ts: v.get("ts").and_then(|x| x.as_str()).map(|s| s.to_string()),
-                chain: v.get("chain").and_then(|x| x.as_str()).map(|s| s.to_string()),
-                txid: v.get("txid").and_then(|x| x.as_str()).map(|s| s.to_string()),
+                chain: v
+                    .get("chain")
+                    .and_then(|x| x.as_str())
+                    .map(|s| s.to_string()),
+                txid: v
+                    .get("txid")
+                    .and_then(|x| x.as_str())
+                    .map(|s| s.to_string()),
                 status: v
                     .get("status")
                     .and_then(|x| x.as_str())

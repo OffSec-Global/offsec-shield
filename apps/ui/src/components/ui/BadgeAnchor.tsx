@@ -1,10 +1,4 @@
-type AnchorEvent = {
-  root: string;
-  ts: string;
-  chain: string;
-  txid: string;
-  status: string;
-};
+import type { AnchorEvent } from '@/types/events';
 
 export function BadgeAnchor({ anchor }: { anchor: AnchorEvent | null }) {
   if (!anchor) {

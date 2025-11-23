@@ -40,6 +40,9 @@ services:
     environment:
       - GUARDIAN_LOGLEVEL=info
       - GUARDIAN_API_URL=http://portal-ext:9115
+      - GUARDIAN_JWT_HS256_SECRET=dev-secret
+      - GUARDIAN_CAP_AUD=offsec-portal
+      - GUARDIAN_ALLOWED_ACTIONS=ingest,offsec.action.block_ip
       - GUARDIAN_CONFIG=/app/config/dev.toml
     volumes:
       - /var/log:/host/logs:ro
@@ -51,12 +54,12 @@ services:
     restart: unless-stopped
 
   vaultmesh-portal:
-    image: vaultmesh/portal:latest
+    # Dev stub so Compose doesn't fail on private VaultMesh image.
+    image: hashicorp/http-echo:0.2.3
+    command: ["-listen=:9110", "-text=ok"]
     container_name: vaultmesh-portal
     ports:
       - "9110:9110"
-    environment:
-      - PORTAL_ENV=dev
     networks:
       - offsec
     restart: unless-stopped

@@ -94,20 +94,24 @@ claims = {
     "aud": "offsec-portal",
     "iat": now,
     "exp": now + 300,
-    "actions": ["ingest"],
+    "actions": ["ingest", "offsec.action.block_ip"],
+    "tags": ["demo", "lab"],
     "nonce": "manual-demo-001"
 }
 token = jwt.encode(claims, secret, algorithm="HS256")
 
 event = {
-    "agent_id": "guardian-demo",
+    "id": f"manual-{now}",
+    "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+    "severity": "medium",
     "event_type": "guardian.manual_demo",
-    "payload": {
-        "source": "manual-demo",
-        "message": "Manual demo event triggered from shell.",
-        "severity": "info"
-    },
-    "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    "source": "manual-demo",
+    "source_host": "demo-shell",
+    "guardian_id": "guardian-demo",
+    "guardian_tags": ["demo", "lab"],
+    "description": "Manual demo event triggered from shell.",
+    "affected": ["198.51.100.77"],
+    "metadata": {"notes": "manual demo payload"}
 }
 
 resp = requests.post(
@@ -180,3 +184,41 @@ If the Merkle path and anchor match the bundle’s root, you’ll see:
 ```
 
 Operators can either click **Download proof** in the UI or hit `/offsec/proof/:id`, then run `offsec-proof-verify` anywhere to check inclusion + anchor without trusting the original node.
+
+---
+
+## 9. Mesh Demo (Two-Nodes)
+
+To see federation in action:
+
+1. Start two OffSec Shield nodes on different ports or hosts (`shield-lon-01` and `shield-nyc-01`), each with:
+   - its own `OFFSEC_DATA_DIR`
+   - a unique `mesh.node_id`
+   - its own Ed25519 keypair
+   - the other node listed under `[mesh.peers]`
+2. On node A, run the standard demo:
+
+   ```bash
+   ./demo/run_demo.sh
+   ```
+
+   This generates events, actions, receipts, roots, and anchors locally.
+3. Run the mesh daemon on node A:
+
+   ```bash
+   cd apps/mesh-daemon
+   OFFSEC_DATA_DIR=../data-lon \
+   OFFSEC_API_URL=http://localhost:9115 \
+   poetry run mesh-daemon
+   ```
+
+4. On node B, open the UI and watch the Mesh panel:
+   - new `mesh.root_announce` entries appear from `shield-lon-01`;
+   - `mesh.proof_received` entries show remote proofs arriving.
+5. Optionally, export a remote proof bundle from node B and verify it:
+
+   ```bash
+   offsec-proof-verify path/to/offsec-proof-*.json
+   ```
+
+This demonstrates that OffSec Shield can export proofs from one node, ship them across the mesh, and have another node verify and display them.

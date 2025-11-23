@@ -42,10 +42,28 @@ pub async fn submit_action(
         return Err((code, Json(err)));
     }
 
+    let mut action = action;
+    if action.guardian_id.is_none() {
+        action.guardian_id = Some(claims.sub.clone());
+    }
+    if action.guardian_tags.is_empty() {
+        if let Some(tags_val) = claims.extra.get("tags").and_then(|v| v.as_array()) {
+            let tags: Vec<String> = tags_val
+                .iter()
+                .filter_map(|v| v.as_str().map(|s| s.to_string()))
+                .collect();
+            action.guardian_tags = tags;
+        }
+    }
+
     let update = ActionUpdate {
         id: action.id.clone(),
         action: action.action.clone(),
         status: "accepted".to_string(),
+        guardian_id: action.guardian_id.clone(),
+        guardian_tags: action.guardian_tags.clone(),
+        created_at: action.created_at.clone(),
+        executed_at: "".to_string(),
     };
 
     let payload = json!({
@@ -57,7 +75,8 @@ pub async fn submit_action(
     match write_receipt(
         &state,
         &format!("offsec.action.{}", action.action),
-        &claims.sub,
+        action.guardian_id.as_deref(),
+        &action.guardian_tags,
         &payload,
     ) {
         Ok(receipt) => {

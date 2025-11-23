@@ -1,8 +1,10 @@
 pub mod action;
-pub mod anchor;
-pub mod ingest;
 pub mod action_apply;
 pub mod action_update;
+pub mod anchor;
+pub mod ingest;
+pub mod mesh_proof;
+pub mod mesh_root;
 pub mod proof;
 
 use crate::{receipts, ws, AppState};
@@ -22,6 +24,12 @@ pub fn router(state: AppState) -> Router {
         .route("/offsec/receipts", get(receipts::list_receipts))
         .route("/offsec/root", get(receipts::current_root))
         .route("/offsec/proof/:id", get(proof::proof))
+        .route("/offsec/mesh/proof", post(mesh_proof::mesh_proof))
+        .route(
+            "/offsec/mesh/proof/:node/:id",
+            get(mesh_proof::get_mesh_proof),
+        )
+        .route("/offsec/mesh/root", post(mesh_root::mesh_root))
         .route("/offsec/ws", get(ws::stream::handler))
         .with_state(state)
 }

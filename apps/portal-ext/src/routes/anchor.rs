@@ -31,7 +31,7 @@ pub async fn anchor(
         "txid": event["data"]["txid"],
         "status": event["data"]["status"],
     });
-    if let Err(err) = write_receipt(&state, "offsec.anchor", "root-watcher", &receipt_payload) {
+    if let Err(err) = write_receipt(&state, "offsec.anchor", None, &[], &receipt_payload) {
         tracing::warn!("Failed to write anchor receipt: {}", err);
     }
 

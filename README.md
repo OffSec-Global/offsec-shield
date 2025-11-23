@@ -72,6 +72,8 @@ code .
 
 ## 📚 Documentation
 
+- [OPERATOR_HANDBOOK.md](docs/OPERATOR_HANDBOOK.md) — How to run, operate, and verify Shield end-to-end
+- [INCIDENT_PLAYBOOKS.md](docs/INCIDENT_PLAYBOOKS.md) — Runnable attack stories and rehearsal steps
 - [SPEC.md](docs/SPEC.md) — Complete technical specification
 - [ARCHITECTURE.md](docs/ARCHITECTURE.md) — System design, flows, ports
 - [EVENTS.md](docs/EVENTS.md) — Event/action/receipt schema

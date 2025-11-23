@@ -6,7 +6,7 @@ import threading
 from datetime import datetime, timezone
 
 from guardian.client import PortalClient
-from guardian.config import config
+from guardian.config import config, guardian_id, guardian_tags
 from guardian.detectors import load_detectors
 from guardian.models import ActionRequest
 from guardian.action_server import start_action_server
@@ -23,14 +23,23 @@ class Guardian:
         self.client = PortalClient()
         self.detectors = load_detectors(config.get("detectors.enabled", []))
         self.allowed_actions = set(config.get("actions.allowed", []))
+        self.guardian_id = guardian_id()
+        self.guardian_tags = guardian_tags()
 
     async def run(self):
-        logger.info("Guardian starting with detectors: %s", [d.name for d in self.detectors])
+        logger.info(
+            "Guardian starting (id=%s, tags=%s) with detectors: %s",
+            self.guardian_id,
+            self.guardian_tags,
+            [d.name for d in self.detectors],
+        )
         server = start_action_server()
         server_thread = threading.Thread(target=server.serve_forever, daemon=True)
         server_thread.start()
         try:
             await self._demo_ingestion()
+            # Keep the process alive to serve actions and avoid restart loops.
+            await self._idle_forever()
         except KeyboardInterrupt:
             logger.info("Guardian stopping...")
         finally:
@@ -51,9 +60,13 @@ class Guardian:
             for detector in self.detectors:
                 events = await detector.detect(log_line)
                 for event in events:
-                    logger.info("Event detected: %s - %s", event.event_type, event.description)
+                    logger.info(
+                        "Event detected: %s - %s", event.event_type, event.description
+                    )
                     await self.client.ingest_event(event)
-                    await self._maybe_execute_action(event.id, event.affected[0] if event.affected else "")
+                    await self._maybe_execute_action(
+                        event.id, event.affected[0] if event.affected else ""
+                    )
 
             await asyncio.sleep(1)
 
@@ -74,6 +87,10 @@ class Guardian:
             created_at=datetime.now(timezone.utc).isoformat(),
         )
         await self.client.submit_action(action)
+
+    async def _idle_forever(self):
+        while True:
+            await asyncio.sleep(3600)
 
 
 def main():

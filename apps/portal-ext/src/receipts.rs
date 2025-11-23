@@ -4,7 +4,12 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
+use axum::{
+    extract::{Query, State},
+    http::StatusCode,
+    response::IntoResponse,
+    Json,
+};
 use blake3;
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
@@ -15,7 +20,12 @@ use crate::{merkle::MerklePathElement, AppState};
 pub struct OffsecReceipt {
     pub id: String,
     pub event_type: String,
-    pub agent_id: String,
+    #[serde(default)]
+    pub guardian_id: Option<String>,
+    #[serde(default)]
+    pub guardian_tags: Vec<String>,
+    #[serde(default)]
+    pub agent_id: Option<String>,
     pub timestamp: String,
     #[serde(default)]
     pub ts: String,
@@ -28,7 +38,8 @@ pub struct OffsecReceipt {
 pub fn write_receipt(
     state: &AppState,
     event_type: &str,
-    agent_id: &str,
+    guardian_id: Option<&str>,
+    guardian_tags: &[String],
     payload: &serde_json::Value,
 ) -> Result<OffsecReceipt, String> {
     let serialized = serde_json::to_vec(payload).map_err(|e| e.to_string())?;
@@ -44,10 +55,13 @@ pub fn write_receipt(
 
     let timestamp = Utc::now().to_rfc3339();
     let receipt_id = format!("offsec-{}", leaf_hash);
+    let guardian_id = guardian_id.map(|g| g.to_string());
     let receipt = OffsecReceipt {
         id: receipt_id.clone(),
         event_type: event_type.to_string(),
-        agent_id: agent_id.to_string(),
+        guardian_id: guardian_id.clone(),
+        guardian_tags: guardian_tags.to_vec(),
+        agent_id: guardian_id.clone(),
         timestamp: timestamp.clone(),
         ts: timestamp.clone(),
         hash: leaf_hash.clone(),
@@ -71,6 +85,14 @@ pub fn write_receipt(
 }
 
 pub fn read_receipts(data_dir: &str, limit: usize) -> Vec<OffsecReceipt> {
+    read_receipts_filtered(data_dir, limit, None)
+}
+
+pub fn read_receipts_filtered(
+    data_dir: &str,
+    limit: usize,
+    guardian_id: Option<&str>,
+) -> Vec<OffsecReceipt> {
     let dir = PathBuf::from(data_dir).join("receipts/offsec");
     let mut receipts = Vec::new();
 
@@ -84,13 +106,32 @@ pub fn read_receipts(data_dir: &str, limit: usize) -> Vec<OffsecReceipt> {
         }
     }
 
+    if let Some(gid) = guardian_id {
+        receipts.retain(|r| {
+            r.guardian_id.as_deref() == Some(gid) || r.agent_id.as_deref() == Some(gid)
+        });
+    }
+
     receipts.sort_by(|a, b| b.timestamp.cmp(&a.timestamp));
     receipts.truncate(limit);
     receipts
 }
 
-pub async fn list_receipts(State(state): State<AppState>) -> impl IntoResponse {
-    let receipts = read_receipts(&state.config.data_dir, 50);
+#[derive(Debug, Deserialize)]
+pub struct ReceiptQuery {
+    #[serde(default)]
+    pub guardian_id: Option<String>,
+    #[serde(default)]
+    pub limit: Option<usize>,
+}
+
+pub async fn list_receipts(
+    State(state): State<AppState>,
+    Query(params): Query<ReceiptQuery>,
+) -> impl IntoResponse {
+    let limit = params.limit.unwrap_or(50);
+    let receipts =
+        read_receipts_filtered(&state.config.data_dir, limit, params.guardian_id.as_deref());
     (StatusCode::OK, Json(receipts))
 }
 

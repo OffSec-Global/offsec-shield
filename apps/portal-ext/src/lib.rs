@@ -1,6 +1,7 @@
 pub mod capabilities;
 pub mod config;
 pub mod merkle;
+pub mod mesh;
 pub mod models;
 pub mod receipts;
 pub mod routes;

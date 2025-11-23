@@ -8,6 +8,8 @@ export interface Receipt {
   hash: string;
   action_id?: string;
   event_type?: string;
+  guardian_id?: string | null;
+  guardian_tags?: string[];
   agent_id?: string;
   merkle_root?: string;
   proof?: string;

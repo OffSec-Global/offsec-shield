@@ -6,12 +6,39 @@ export type OffsecAction =
   | 'isolate_host'
   | string;
 
+export interface AnchorEvent {
+  root: string;
+  ts: string;
+  chain?: string | null;
+  txid?: string | null;
+  status?: string | null;
+}
+
+export interface MeshRootAnnounce {
+  from: string;
+  root: string;
+  ts: string;
+  anchor?: AnchorEvent | null;
+}
+
+export interface MeshProofReceived {
+  from: string;
+  receiptId: string;
+  eventType: string;
+  root: string;
+  ts: string;
+}
+
 export interface ThreatEvent {
   id: string;
   timestamp: string;
   severity: Severity;
   event_type: string;
   source: string;
+  source_host?: string | null;
+  source_role?: string | null;
+  guardian_id?: string | null;
+  guardian_tags?: string[];
   description: string;
   affected: string[];
   metadata?: Record<string, unknown>;
@@ -23,6 +50,8 @@ export interface ActionUpdate {
   status: 'pending' | 'accepted' | 'executed' | 'failed' | string;
   created_at?: string;
   executed_at?: string;
+  guardian_id?: string | null;
+  guardian_tags?: string[];
 }
 
 export interface ActionRequested {
@@ -33,7 +62,19 @@ export interface ActionRequested {
   requested_by?: string;
   ts?: string;
   receipt_id?: string;
+  guardian_id?: string | null;
+  guardian_tags?: string[];
 }
+
+export type OffsecWsType =
+  | 'threat_event'
+  | 'action_update'
+  | 'receipt'
+  | 'offsec.action.requested'
+  | 'offsec.action.result'
+  | 'offsec.anchor'
+  | 'mesh.root_announce'
+  | 'mesh.proof_received';
 
 export interface ActionResult {
   action_id: string;
@@ -42,4 +83,6 @@ export interface ActionResult {
   details?: Record<string, unknown>;
   ts?: string;
   receipt_id?: string;
+  guardian_id?: string | null;
+  guardian_tags?: string[];
 }

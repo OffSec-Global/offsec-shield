@@ -14,6 +14,7 @@ timeout_secs = 30
 # Guardian API endpoint for event ingestion
 api_url = "http://localhost:8001"
 id = "guardian-dev"
+tags = ["dev", "lab"]
 capability_token = "dev-token-12345" # fallback if JWT is not configured
 # JWT auth (preferred): set GUARDIAN_JWT_PRIVATE_KEY or point to a key file
 jwt_private_key_path = "config/dev-guardian.ed25519"

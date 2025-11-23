@@ -6,9 +6,10 @@ import { applyAction } from '@/lib/api';
 type Props = {
   actions: ActionUpdate[];
   suggestedTarget?: string;
+  guardianId?: string;
 };
 
-export function ActionPanel({ actions, suggestedTarget }: Props) {
+export function ActionPanel({ actions, suggestedTarget, guardianId }: Props) {
   const [targetIp, setTargetIp] = useState<string>('');
   const [submitting, setSubmitting] = useState(false);
   const [lastActionId, setLastActionId] = useState<string | null>(null);
@@ -34,6 +35,7 @@ export function ActionPanel({ actions, suggestedTarget }: Props) {
         reason: `Operator block from UI${suggestedTarget ? ' (suggested)' : ''}`,
         requested_by: 'operator-ui',
         ts: new Date().toISOString(),
+        guardian_id: guardianId,
       });
     } catch (e: any) {
       setError(e?.message || 'Failed to apply action');
@@ -47,6 +49,15 @@ export function ActionPanel({ actions, suggestedTarget }: Props) {
       title="Action Panel"
       rightSlot={<div className="panel-pill">{actions.length} actions</div>}
     >
+      {guardianId ? (
+        <div className="muted" style={{ marginBottom: '6px' }}>
+          Scoped to <span className="pill">{guardianId}</span>
+        </div>
+      ) : (
+        <div className="muted" style={{ marginBottom: '6px' }}>
+          No guardian selected — actions will use default capability token.
+        </div>
+      )}
       <div style={{ marginBottom: '10px' }}>
         <div className="muted" style={{ marginBottom: '4px' }}>
           Target IP
@@ -77,15 +88,23 @@ export function ActionPanel({ actions, suggestedTarget }: Props) {
       {actions.length === 0 ? (
         <div style={{ color: '#888' }}>» No active actions</div>
       ) : (
-        actions.map((action) => (
-          <div key={action.id} className="event-item">
-            <div className="event-row">
-              <span className="pill">{action.action}</span>
-              <span className="pill subtle">{action.status}</span>
+        actions.map((action) => {
+          const when = action.executed_at || action.created_at || '–';
+          return (
+            <div key={action.id} className="event-item">
+              <div className="event-row">
+                <span className="pill">{action.action}</span>
+                <span className="pill subtle">{action.status}</span>
+              </div>
+              {action.guardian_id ? (
+                <div className="event-meta">
+                  Guardian: <span className="pill subtle">{action.guardian_id}</span>
+                </div>
+              ) : null}
+              <div className="timestamp">{when}</div>
             </div>
-            <div className="timestamp">{action.created_at}</div>
-          </div>
-        ))
+          );
+        })
       )}
     </Panel>
   );

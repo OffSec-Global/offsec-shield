@@ -9,6 +9,10 @@ class ThreatEvent(BaseModel):
     severity: Literal["critical", "high", "medium", "low"]
     event_type: str
     source: str
+    source_host: Optional[str] = None
+    source_role: Optional[str] = None
+    guardian_id: Optional[str] = None
+    guardian_tags: List[str] = Field(default_factory=list)
     description: str
     affected: List[str] = Field(default_factory=list)
     metadata: dict = Field(default_factory=dict)
@@ -21,6 +25,9 @@ class ActionRequest(BaseModel):
     target: str
     reason: str
     created_at: str
+    guardian_id: Optional[str] = None
+    guardian_tags: List[str] = Field(default_factory=list)
+    requested_by: Optional[str] = None
 
 
 class Receipt(BaseModel):
