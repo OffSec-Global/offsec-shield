@@ -43,6 +43,7 @@ Cargo.lock
 config/*.toml
 !config/*.example.toml
 data/
+data-offsec/
 
 # OS
 .DS_Store

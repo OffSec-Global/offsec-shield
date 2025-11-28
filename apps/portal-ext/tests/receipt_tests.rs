@@ -15,8 +15,8 @@ async fn writes_receipt_and_updates_root() {
     let payload = json!({ "id": "evt-123", "foo": "bar" });
     let tags: Vec<String> = vec![];
 
-    let receipt =
-        write_receipt(&state, "test", Some("guardian-alpha"), &tags, &payload).expect("receipt write");
+    let receipt = write_receipt(&state, "test", Some("guardian-alpha"), &tags, &payload)
+        .expect("receipt write");
 
     assert!(receipt.hash.len() == 64);
     assert!(receipt.id.starts_with("offsec-"));
