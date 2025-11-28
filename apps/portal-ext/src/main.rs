@@ -6,6 +6,13 @@ async fn main() {
     tracing_subscriber::fmt::init();
 
     let config = OffsecConfig::from_env();
+
+    if let Err(e) = portal_ext::offsec_ledger::rebuild_index() {
+        tracing::warn!("failed to rebuild incident index: {}", e);
+    } else {
+        tracing::info!("incident index rebuilt from receipts");
+    }
+
     let state = build_state(config.clone());
 
     let app = app_router(state).layer(TraceLayer::new_for_http());

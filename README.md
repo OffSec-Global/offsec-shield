@@ -80,8 +80,25 @@ code .
 - [ROADMAP.md](docs/ROADMAP.md) — v0.1 → v1.0 timeline
 - [CUSTOMERS.md](docs/CUSTOMERS.md) — Personas and operating modes
 
-Receipts are written to `data/receipts/offsec/*.json` with a rolling `ROOT.txt` merkle root (configurable via `OFFSEC_DATA_DIR`).
+Receipts are written to `data-offsec/receipts/infrastructure/*.json` with proofs in `data-offsec/proofs/` (configurable via `OFFSEC_DATA_DIR`, default `./data-offsec`).
 Anchoring stub: run `scripts/root_watcher.py` to watch `ROOT.txt`, write `ANCHOR.json`, and (optionally) broadcast `offsec.anchor.*` events via HTTP.
+
+## 🧪 Ledger Integration Demo
+
+1. `export OFFSEC_DATA_DIR=./data-offsec` (or point elsewhere; issuer defaults to `did:vm:node:offsec-shield`).
+2. Provision `data-offsec/trusted_issuers.json` with trusted DIDs → verifying key hex (Ed25519).
+3. Generate a capability token (base64 of signed capability JSON) and `export OFFSEC_CAPABILITY_B64=<token>`.
+4. Start Portal-Ext: `cd apps/portal-ext && cargo run`.
+5. One-time dependency: `python3 -m pip install requests`.
+6. Send a sample infra event: `python3 integration/offsec_event_demo.py` (uses `OFFSEC_CAPABILITY_B64`).
+7. Inspect receipts/proofs in `data-offsec/` and fetch the incident: `curl http://localhost:9115/api/offsec/incidents/<incident_id>`.
+
+Helper to mint a capability token for testing:
+`python3 -m pip install pynacl` then `python3 tools/make_capability.py --issuer did:vm:node:sovereign --sk <hex_priv> --scopes infrastructure:write --exp-secs 3600` then `export OFFSEC_CAPABILITY_B64=<output>`
+
+API:
+- `POST /api/offsec/events` — accepts InfrastructureEvent JSON with `Authorization: Bearer <base64-capability>` and returns `incident_id` + `receipt_id`.
+- `GET /api/offsec/incidents/:id` — returns receipts for a chain.
 
 ## 📝 License
 

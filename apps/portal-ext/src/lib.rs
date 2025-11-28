@@ -3,6 +3,7 @@ pub mod config;
 pub mod merkle;
 pub mod mesh;
 pub mod models;
+pub mod offsec_ledger;
 pub mod receipts;
 pub mod routes;
 pub mod ws;

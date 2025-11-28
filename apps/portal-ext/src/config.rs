@@ -50,7 +50,7 @@ impl OffsecConfig {
             jwt_hs256_secret: env::var("OFFSEC_JWT_HS256_SECRET")
                 .ok()
                 .or_else(|| Some("dev-secret".to_string())),
-            data_dir: env::var("OFFSEC_DATA_DIR").unwrap_or_else(|_| "data".to_string()),
+            data_dir: env::var("OFFSEC_DATA_DIR").unwrap_or_else(|_| "data-offsec".to_string()),
             guardian_url: env::var("OFFSEC_GUARDIAN_URL").ok(),
             mesh: None,
         }

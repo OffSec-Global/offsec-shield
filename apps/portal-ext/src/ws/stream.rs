@@ -14,8 +14,7 @@ pub struct WsBroadcaster {
 
 impl WsBroadcaster {
     pub fn new() -> Self {
-        let (tx, _rx) = broadcast::channel(256);
-        Self { tx }
+        Self::default()
     }
 
     pub fn send_json(&self, payload: &serde_json::Value) {
@@ -24,6 +23,13 @@ impl WsBroadcaster {
 
     pub fn subscribe(&self) -> broadcast::Receiver<String> {
         self.tx.subscribe()
+    }
+}
+
+impl Default for WsBroadcaster {
+    fn default() -> Self {
+        let (tx, _rx) = broadcast::channel(256);
+        Self { tx }
     }
 }
 
