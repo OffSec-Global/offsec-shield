@@ -1,0 +1,119 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/portal-ext
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          components: rustfmt, clippy
+
+      - name: Cargo fmt --check
+        run: cargo fmt -- --check
+
+      - name: Cargo clippy
+        run: cargo clippy -- -D warnings
+
+      - name: Cargo test
+        run: cargo test --quiet
+
+  integration:
+    name: integration: portal-ext golden path
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install Python deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests pynacl
+
+      - name: Generate keypair and capability
+        run: |
+          python - <<'PY' >> $GITHUB_ENV
+import json, base64, time
+from nacl.signing import SigningKey
+sk = SigningKey.generate()
+sk_hex = sk.encode().hex()
+vk_hex = sk.verify_key.encode().hex()
+cap_unsigned = {
+    "sub": "ci-agent",
+    "scopes": ["infrastructure:write"],
+    "constraints": {},
+    "issued_by": "did:vm:node:ci",
+    "exp": int(time.time()) + 900,
+}
+unsigned_bytes = json.dumps(cap_unsigned, separators=(",", ":"), sort_keys=True).encode()
+sig_hex = sk.sign(unsigned_bytes).signature.hex()
+cap = dict(cap_unsigned)
+cap["signature"] = sig_hex
+cap_json = json.dumps(cap, separators=(",", ":"), sort_keys=True).encode()
+cap_b64 = base64.b64encode(cap_json).decode()
+print(f"SK_HEX={sk_hex}")
+print(f"VK_HEX={vk_hex}")
+print(f"CAP_B64={cap_b64}")
+PY
+
+      - name: Start portal-ext in background
+        env:
+          RUST_BACKTRACE: 1
+          OFFSEC_DATA_DIR: ${{ runner.temp }}/data-offsec
+          VK_HEX: ${{ env.VK_HEX }}
+        run: |
+          mkdir -p "$OFFSEC_DATA_DIR"
+          cat > "$OFFSEC_DATA_DIR/trusted_issuers.json" <<EOF
+{ "did:vm:node:ci": "${VK_HEX}" }
+EOF
+          cd apps/portal-ext
+          nohup cargo run --release > "$RUNNER_TEMP/portal-ext.log" 2>&1 & echo $! > "$RUNNER_TEMP/portal-ext.pid"
+          # wait for server
+          for i in $(seq 1 30); do
+            if curl -sS http://localhost:9115/healthz >/dev/null 2>&1; then
+              echo "portal-ext up"
+              break
+            fi
+            sleep 1
+          done
+          sleep 1
+          tail -n 50 "$RUNNER_TEMP/portal-ext.log" || true
+
+      - name: Run Guardian demo against portal-ext
+        env:
+          OFFSEC_CAPABILITY_B64: ${{ env.CAP_B64 }}
+        run: |
+          python integration/offsec_event_demo.py
+
+      - name: Verify receipts created
+        env:
+          OFFSEC_DATA_DIR: ${{ runner.temp }}/data-offsec
+        run: |
+          ls -la "${OFFSEC_DATA_DIR}/receipts/infrastructure" || (echo "No receipts found"; tail -n 200 "$RUNNER_TEMP/portal-ext.log"; exit 1)
+          ls -la "${OFFSEC_DATA_DIR}/proofs" || echo "No proofs yet (ok for <=5 receipts)"
