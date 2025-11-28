@@ -1,19 +1,19 @@
-import React, { useState } from "react";
-import { Panel } from "./ui/Panel";
-import type { MeshProofReceived, MeshRootAnnounce, AnchorEvent } from "@/types/events";
-import type { Receipt } from "@/types/receipts";
-import MerkleExplorer, { MerkleProof } from "./MerkleExplorer";
+import { useState } from 'react';
+import type { MeshProofReceived, MeshRootAnnounce, AnchorEvent } from '@/types/events';
+import type { Receipt } from '@/types/receipts';
+import MerkleExplorer, { MerkleProof } from './MerkleExplorer';
+import { Panel } from './rubedo';
 
 type Props = {
   roots: MeshRootAnnounce[];
   proofs: MeshProofReceived[];
 };
 
-const API_URL = process.env.NEXT_PUBLIC_OFFSEC_API_URL || "http://localhost:9115";
+const API_URL = process.env.NEXT_PUBLIC_OFFSEC_API_URL || 'http://localhost:9115';
 
 type ProofBundle = {
   leaf: string;
-  path: { sibling: string; position: "left" | "right" }[];
+  path: { sibling: string; position: 'left' | 'right' }[];
   root: string;
   anchor?: AnchorEvent | null;
   receiptId?: string;
@@ -45,15 +45,15 @@ export function MeshPanel({ roots, proofs }: Props) {
         `${API_URL}/offsec/mesh/proof/${encodeURIComponent(peer)}/${encodeURIComponent(receiptId)}`
       );
       if (!res.ok) {
-        console.error("Failed to fetch mesh proof bundle", res.status);
+        console.error('Failed to fetch mesh proof bundle', res.status);
         return null;
       }
       const bundle = (await res.json()) as ProofBundle;
 
       if (opts.download) {
-        const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: "application/json" });
+        const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
+        const a = document.createElement('a');
         a.href = url;
         a.download = `offsec-mesh-proof-${peer}-${receiptId}.json`;
         a.click();
@@ -62,7 +62,7 @@ export function MeshPanel({ roots, proofs }: Props) {
 
       return bundle;
     } catch (e) {
-      console.error("Error fetching mesh proof bundle", e);
+      console.error('Error fetching mesh proof bundle', e);
       return null;
     }
   }
@@ -79,7 +79,7 @@ export function MeshPanel({ roots, proofs }: Props) {
   function toReceiptSkeleton(bundle: ProofBundle | null): Receipt | null {
     if (!bundle) return null;
     return {
-      id: bundle.receiptId || "mesh-remote",
+      id: bundle.receiptId || 'mesh-remote',
       hash: bundle.leaf,
       ts: bundle.ts,
       timestamp: bundle.ts,
@@ -88,30 +88,53 @@ export function MeshPanel({ roots, proofs }: Props) {
   }
 
   return (
-    <Panel title="Mesh Federation">
+    <Panel title="Mesh Federation" subtitle={`${peers.length} peers connected`}>
       {peers.length === 0 && proofs.length === 0 ? (
-        <div className="muted">No mesh traffic yet — start mesh-daemon on a peer node.</div>
+        <div className="flex flex-col items-center justify-center py-8 text-center">
+          <span className="text-2xl mb-2 opacity-30">⬡</span>
+          <span className="font-mono text-[0.8rem] text-platinum-dim">
+            No mesh traffic yet — start mesh-daemon on a peer node.
+          </span>
+        </div>
       ) : (
-        <div>
-          <div className="mesh-grid">
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* Peer Roots */}
             <div>
-              <div className="mesh-section-title">Peer Roots</div>
-              <ul className="mesh-list">
+              <h4 className="font-mono text-[0.65rem] font-semibold uppercase tracking-wide text-platinum-muted mb-3">
+                Peer Roots
+              </h4>
+              <ul className="space-y-2">
                 {peers.map((id) => {
                   const r = latestRootByPeer[id];
                   const anchor = r.anchor;
-                  const anchored = !!anchor && anchor.status === "anchored";
+                  const anchored = !!anchor && anchor.status === 'anchored';
                   const anchorLabel = anchor?.chain
-                    ? `${anchor.chain}:${anchor.txid?.slice(0, 10) ?? "…"}`
-                    : "—";
+                    ? `${anchor.chain}:${anchor.txid?.slice(0, 10) ?? '…'}`
+                    : '—';
                   return (
-                    <li key={id} className="mesh-item">
-                      <div className="mesh-peer">{id}</div>
-                      <div className="mesh-root mono break-all">{r.root}</div>
-                      <div className="mesh-meta">
-                        <span className="mesh-ts">{r.ts}</span>
-                        <span className={anchored ? "mesh-badge anchored" : "mesh-badge"}>
-                          {anchored ? "Anchored" : "Unanchored"} {anchorLabel}
+                    <li
+                      key={id}
+                      className="p-3 bg-surface-2 rounded-md border-l-[3px] border-l-cyan"
+                    >
+                      <div className="font-mono text-[0.75rem] font-semibold text-platinum mb-1">
+                        {id}
+                      </div>
+                      <div className="font-mono text-[0.65rem] text-platinum-muted break-all mb-2">
+                        {r.root}
+                      </div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-mono text-[0.55rem] text-platinum-dim">
+                          {r.ts}
+                        </span>
+                        <span
+                          className={`font-mono text-[0.55rem] px-1.5 py-0.5 rounded-sm ${
+                            anchored
+                              ? 'bg-emerald-dim text-emerald'
+                              : 'bg-surface-3 text-platinum-dim'
+                          }`}
+                        >
+                          {anchored ? 'Anchored' : 'Unanchored'} {anchorLabel}
                         </span>
                       </div>
                     </li>
@@ -120,12 +143,17 @@ export function MeshPanel({ roots, proofs }: Props) {
               </ul>
             </div>
 
+            {/* Remote Proofs */}
             <div>
-              <div className="mesh-section-title">Remote Proofs</div>
+              <h4 className="font-mono text-[0.65rem] font-semibold uppercase tracking-wide text-platinum-muted mb-3">
+                Remote Proofs
+              </h4>
               {proofs.length === 0 ? (
-                <div className="muted">No remote proofs received yet.</div>
+                <div className="font-mono text-[0.75rem] text-platinum-dim">
+                  No remote proofs received yet.
+                </div>
               ) : (
-                <ul className="mesh-list">
+                <ul className="space-y-2">
                   {proofs.slice(0, 12).map((p, idx) => {
                     const isSelected =
                       selectedBundle &&
@@ -135,30 +163,41 @@ export function MeshPanel({ roots, proofs }: Props) {
                     return (
                       <li
                         key={`${p.from}-${p.receiptId}-${idx}`}
-                        className={`mesh-item mesh-proof-row ${isSelected ? "active" : ""}`}
                         onClick={async () => {
                           const bundle = await fetchMeshProof(p.from, p.receiptId);
                           if (bundle) setSelectedBundle(bundle);
                         }}
+                        className={`p-3 bg-surface-2 rounded-md cursor-pointer transition-colors hover:bg-surface-3
+                          ${isSelected ? 'border-l-[3px] border-l-emerald' : 'border-l-[3px] border-l-amber'}`}
                       >
-                        <div className="mesh-peer">
-                          {p.from} <span className="mesh-event">{p.eventType}</span>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-mono text-[0.75rem] font-semibold text-platinum">
+                            {p.from}
+                          </span>
+                          <span className="font-mono text-[0.6rem] px-1.5 py-0.5 bg-cyan-dim text-cyan rounded-sm">
+                            {p.eventType}
+                          </span>
                         </div>
-                        <div className="mesh-root mono break-all">
+                        <div className="font-mono text-[0.65rem] text-platinum-muted break-all mb-2">
                           {p.receiptId} · {p.root.slice(0, 18)}…
                         </div>
-                        <div className="mesh-meta mesh-proof-meta">
-                          <span className="mesh-ts">{p.ts}</span>
+                        <div className="flex items-center justify-between">
+                          <span className="font-mono text-[0.55rem] text-platinum-dim">
+                            {p.ts}
+                          </span>
                           <button
                             type="button"
-                            className="mesh-download-btn"
                             onClick={async (e) => {
                               e.stopPropagation();
-                              const bundle = await fetchMeshProof(p.from, p.receiptId, { download: true });
+                              const bundle = await fetchMeshProof(p.from, p.receiptId, {
+                                download: true,
+                              });
                               if (bundle) setSelectedBundle(bundle);
                             }}
+                            className="font-mono text-[0.55rem] px-1.5 py-0.5 border border-border rounded-sm
+                              bg-transparent text-platinum-dim hover:border-emerald hover:text-emerald transition-colors"
                           >
-                            ⬇ proof
+                            proof
                           </button>
                         </div>
                       </li>
@@ -170,13 +209,15 @@ export function MeshPanel({ roots, proofs }: Props) {
           </div>
 
           {/* Explorer for selected remote proof */}
-          <div className="mesh-explorer-wrapper" style={{ marginTop: 8 }}>
-            <MerkleExplorer
-              proof={toMerkleProof(selectedBundle)}
-              anchor={selectedBundle?.anchor ?? null}
-              receipt={toReceiptSkeleton(selectedBundle)}
-            />
-          </div>
+          {selectedBundle && (
+            <div className="pt-4 border-t border-border">
+              <MerkleExplorer
+                proof={toMerkleProof(selectedBundle)}
+                anchor={selectedBundle?.anchor ?? null}
+                receipt={toReceiptSkeleton(selectedBundle)}
+              />
+            </div>
+          )}
         </div>
       )}
     </Panel>

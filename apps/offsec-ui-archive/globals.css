@@ -1,12 +1,14 @@
 /**
  * OffSec Shield Rubedo Edition - Global Styles
- *
+ * 
  * Complete design system CSS with:
  * - CSS custom properties (tokens)
  * - Base element styles
  * - Utility classes
  * - Animation keyframes
  * - Component primitives
+ * 
+ * Import this in your layout.tsx or _app.tsx
  */
 
 @tailwind base;
@@ -22,7 +24,7 @@
   --rhythm: 8px;
   --radius: 6px;
   --radius-lg: 12px;
-
+  
   /* Base - Onyx Shadow */
   --bg: #050507;
   --surface: #0E0F12;
@@ -32,45 +34,45 @@
   --border: rgba(255, 255, 255, 0.07);
   --border-subtle: rgba(255, 255, 255, 0.04);
   --border-strong: rgba(255, 255, 255, 0.12);
-
+  
   /* Text - Platinum Veil */
   --platinum: #EDEDF2;
   --platinum-muted: #8A8B94;
   --platinum-dim: #5A5B64;
   --platinum-faint: #3A3B44;
-
+  
   /* Emerald - Healthy / Success */
   --emerald: #00E79E;
   --emerald-bright: #00FFA8;
   --emerald-dim: rgba(0, 231, 158, 0.15);
   --emerald-glow: rgba(0, 231, 158, 0.4);
   --emerald-faint: rgba(0, 231, 158, 0.08);
-
+  
   /* Ruby - Critical / Active Defense */
   --ruby: #FF005D;
   --ruby-bright: #FF3377;
   --ruby-dim: rgba(255, 0, 93, 0.15);
   --ruby-glow: rgba(255, 0, 93, 0.4);
   --ruby-faint: rgba(255, 0, 93, 0.08);
-
+  
   /* Amber - Warning / Degraded */
   --amber: #FFC93C;
   --amber-dim: rgba(255, 201, 60, 0.15);
   --amber-glow: rgba(255, 201, 60, 0.4);
   --amber-faint: rgba(255, 201, 60, 0.08);
-
+  
   /* Cyan - Info / Network */
   --cyan: #00D4FF;
   --cyan-dim: rgba(0, 212, 255, 0.15);
   --cyan-glow: rgba(0, 212, 255, 0.4);
-
+  
   /* Gold - Accent */
   --gold: #D4AF37;
-
+  
   /* Typography */
   --font-display: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
-
+  
   /* Animation */
   --transition-fast: 100ms ease;
   --transition-base: 200ms ease;
@@ -108,7 +110,7 @@
     content: '';
     position: fixed;
     inset: 0;
-    background:
+    background: 
       radial-gradient(ellipse 80% 60% at 20% 20%, var(--emerald-faint) 0%, transparent 50%),
       radial-gradient(ellipse 60% 50% at 80% 80%, var(--ruby-faint) 0%, transparent 40%);
     opacity: 0.5;
@@ -122,7 +124,7 @@
     content: '';
     position: fixed;
     inset: 0;
-    background-image:
+    background-image: 
       linear-gradient(var(--border-subtle) 1px, transparent 1px),
       linear-gradient(90deg, var(--border-subtle) 1px, transparent 1px);
     background-size: calc(var(--rhythm) * 8) calc(var(--rhythm) * 8);
@@ -212,9 +214,33 @@
   50% { opacity: 0.4; }
 }
 
+@keyframes rubedo-pulse {
+  0%, 100% { 
+    box-shadow: 0 0 4px var(--ruby-glow), 0 0 8px rgba(255, 0, 93, 0.2); 
+  }
+  50% { 
+    box-shadow: 0 0 8px var(--ruby-glow), 0 0 16px rgba(255, 0, 93, 0.3); 
+  }
+}
+
+@keyframes scanlines {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(4px); }
+}
+
 @keyframes loading-pulse {
   0%, 100% { opacity: 0.4; }
   50% { opacity: 1; }
+}
+
+@keyframes card-critical {
+  0%, 100% { box-shadow: 0 0 0 1px rgba(255, 0, 93, 0.15); }
+  50% { box-shadow: 0 0 0 1px rgba(255, 0, 93, 0.4), 0 0 12px rgba(255, 0, 93, 0.2); }
+}
+
+@keyframes sweep-emerald {
+  0% { left: -100%; }
+  100% { left: 100%; }
 }
 
 @keyframes threat-enter {
@@ -228,11 +254,68 @@
   }
 }
 
+@keyframes core-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════════
    COMPONENT UTILITIES
    ═══════════════════════════════════════════════════════════════════════════════ */
 
 @layer components {
+  /* Card accent bars */
+  .card-accent-emerald::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 3px;
+    height: 100%;
+    background: var(--emerald);
+  }
+
+  .card-accent-ruby::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 3px;
+    height: 100%;
+    background: var(--ruby);
+  }
+
+  .card-accent-amber::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 3px;
+    height: 100%;
+    background: var(--amber);
+  }
+
+  .card-accent-cyan::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 3px;
+    height: 100%;
+    background: var(--cyan);
+  }
+
+  /* Alchemical watermark */
+  .alchemical-watermark::after {
+    content: '⬡';
+    position: absolute;
+    bottom: calc(var(--rhythm) * 1);
+    right: calc(var(--rhythm) * 1.5);
+    font-size: 0.6rem;
+    color: var(--platinum-faint);
+    opacity: 0.4;
+  }
+
   /* Status dots */
   .status-dot-healthy {
     @apply w-2 h-2 rounded-full bg-emerald;
@@ -249,6 +332,79 @@
   .status-dot-warning {
     @apply w-2 h-2 rounded-full bg-amber;
     box-shadow: 0 0 6px var(--amber-glow);
+  }
+
+  /* Quick link sweep effect */
+  .quick-link-sweep {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .quick-link-sweep::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, var(--emerald-dim), transparent);
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+  }
+
+  .quick-link-sweep:hover::before {
+    animation: sweep-emerald 0.4s ease-out;
+    opacity: 1;
+  }
+
+  /* Error state scanline effect */
+  .error-scanlines::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      var(--ruby-dim) 2px,
+      var(--ruby-dim) 4px
+    );
+    opacity: 0.3;
+    pointer-events: none;
+    animation: scanlines 0.1s linear infinite;
+  }
+
+  /* Empty state hex pattern */
+  .hex-pattern {
+    background-image: 
+      repeating-linear-gradient(60deg, var(--border-subtle) 0px, var(--border-subtle) 1px, transparent 1px, transparent 20px),
+      repeating-linear-gradient(-60deg, var(--border-subtle) 0px, var(--border-subtle) 1px, transparent 1px, transparent 20px);
+    background-size: 40px 40px;
+  }
+
+  /* Gradient underlines */
+  .gradient-underline-emerald {
+    position: relative;
+  }
+
+  .gradient-underline-emerald::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 200px;
+    height: 1px;
+    background: linear-gradient(90deg, var(--emerald), transparent);
+  }
+
+  .gradient-underline-ruby::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 180px;
+    height: 1px;
+    background: linear-gradient(90deg, var(--ruby), transparent);
   }
 }
 
@@ -269,261 +425,13 @@
   .text-glow-amber {
     filter: drop-shadow(0 0 4px var(--amber-glow));
   }
-}
 
-/* ═══════════════════════════════════════════════════════════════════════════════
-   MERKLE EXPLORER STYLES (PRESERVED)
-   ═══════════════════════════════════════════════════════════════════════════════ */
+  /* Font family shortcuts */
+  .font-display {
+    font-family: var(--font-display);
+  }
 
-.merkle-explorer {
-  padding: 12px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--surface-2);
-  font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--platinum-muted);
-}
-
-.merkle-explorer.empty {
-  border-style: dashed;
-  color: var(--platinum-dim);
-}
-
-.merkle-title {
-  color: var(--emerald);
-  font-weight: bold;
-  margin-bottom: 8px;
-  font-size: 13px;
-}
-
-.merkle-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 6px;
-}
-
-.merkle-field {
-  margin-bottom: 8px;
-}
-
-.merkle-path {
-  list-style: disc;
-  margin: 4px 0 0 16px;
-  color: var(--platinum-muted);
-}
-
-.merkle-status {
-  margin-top: 8px;
-  padding: 6px 8px;
-  border-radius: 4px;
-  border: 1px solid var(--border);
-  font-weight: bold;
-}
-
-.merkle-status.ok {
-  color: var(--emerald);
-  border-color: var(--emerald);
-  background: var(--emerald-dim);
-}
-
-.merkle-status.err {
-  color: var(--ruby);
-  border-color: var(--ruby);
-  background: var(--ruby-dim);
-}
-
-.merkle-explorer .ok {
-  color: var(--emerald);
-}
-
-.merkle-explorer .err {
-  color: var(--ruby);
-}
-
-.merkle-tree {
-  font-size: 11px;
-  background: var(--surface-3);
-  border: 1px dashed var(--border);
-  padding: 6px;
-  border-radius: 4px;
-  margin-top: 4px;
-  white-space: pre-wrap;
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════════
-   MESH PANEL STYLES (PRESERVED)
-   ═══════════════════════════════════════════════════════════════════════════════ */
-
-.mesh-grid {
-  display: grid;
-  grid-template-columns: 1.1fr 1fr;
-  gap: 12px;
-  margin-top: 4px;
-}
-
-.mesh-section-title {
-  font-size: 12px;
-  color: var(--emerald);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  margin-bottom: 6px;
-}
-
-.mesh-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.mesh-item {
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  padding: 6px 8px;
-  background: var(--surface-2);
-}
-
-.mesh-peer {
-  font-weight: 600;
-  font-size: 12px;
-  color: var(--platinum);
-}
-
-.mesh-root {
-  font-size: 11px;
-  margin-top: 3px;
-  font-family: var(--font-mono);
-}
-
-.mesh-meta {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 4px;
-  font-size: 10px;
-}
-
-.mesh-ts {
-  color: var(--platinum-dim);
-}
-
-.mesh-badge {
-  padding: 2px 6px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  font-size: 10px;
-  color: var(--platinum-dim);
-}
-
-.mesh-badge.anchored {
-  border-color: var(--emerald);
-  color: var(--emerald);
-}
-
-.mesh-event {
-  margin-left: 4px;
-  color: var(--emerald);
-  font-size: 10px;
-}
-
-.mesh-proof-row {
-  cursor: pointer;
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
-}
-
-.mesh-proof-row.active {
-  border-color: var(--emerald);
-  box-shadow: 0 0 0 1px rgba(0, 231, 158, 0.25);
-}
-
-.mesh-download-btn {
-  background: transparent;
-  border: 1px solid var(--emerald);
-  color: var(--emerald);
-  padding: 2px 6px;
-  font-size: 10px;
-  cursor: pointer;
-  border-radius: 999px;
-  transition: all 0.15s ease;
-}
-
-.mesh-download-btn:hover {
-  background: var(--emerald-dim);
-  box-shadow: 0 0 0 1px var(--emerald-glow);
-}
-
-.mesh-explorer-wrapper {
-  margin-top: 10px;
-}
-
-.mesh-item.active {
-  box-shadow: 0 0 0 1px rgba(0, 231, 158, 0.2);
-  border-left: 3px solid var(--emerald);
-}
-
-.mesh-proof-meta {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════════
-   LEGACY SUPPORT (RECEIPTS, BADGES)
-   ═══════════════════════════════════════════════════════════════════════════════ */
-
-.receipt-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.receipt-card {
-  cursor: pointer;
-  transition: background-color 0.15s ease, border-color 0.15s ease;
-}
-
-.receipt-card:hover {
-  background-color: var(--emerald-dim);
-}
-
-.receipt-card.active {
-  border-left: 3px solid var(--emerald);
-  box-shadow: 0 0 0 1px var(--emerald-glow);
-}
-
-.btn-download {
-  background: transparent;
-  border: 1px solid var(--emerald);
-  color: var(--emerald);
-  padding: 4px 8px;
-  font-size: 11px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-family: var(--font-mono);
-}
-
-.btn-download:hover {
-  background: var(--emerald-dim);
-  box-shadow: 0 0 0 1px var(--emerald-glow);
-}
-
-.muted {
-  color: var(--platinum-dim);
-  font-size: 11px;
-}
-
-.break-all {
-  word-break: break-all;
-}
-
-.mono {
-  font-family: var(--font-mono);
+  .font-mono {
+    font-family: var(--font-mono);
+  }
 }

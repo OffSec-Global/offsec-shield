@@ -401,4 +401,63 @@ python3 tools/make_capability.py \
 
 ---
 
+## 12. OffSec Authtoken → Portal → Ledger
+
+**Purpose**
+
+The OffSec pipeline lets a trusted OffSec node submit signed security events to the portal, which:
+1. Verifies the Ed25519 capability token
+2. Records an incident
+3. Emits a BLAKE3-based receipt into the Civilization Ledger
+
+**Keys & Trusted Issuers**
+- The OffSec signing key is provided via:
+  - `OFFSEC_SK_HEX=...` (private Ed25519 key)
+- The corresponding verifying key is registered in `apps/portal-ext/data-offsec/trusted_issuers.json`
+
+Example:
+
+```json
+{
+  "did:vm:node:sovereign": "1dc915dcf1026a21dd1b2e93bb0cb5bcf6c5767ff41ed17d5e1959ae0ad37595"
+}
+```
+
+The DID (`did:vm:node:sovereign`) is the logical issuer; the hex value is the Ed25519 verifying key.
+
+**Canonical Capability Format**
+- Capabilities are signed in `integration/offsec_event_demo_authtoken.py`.
+- The unsigned JSON object and the final capability JSON are both encoded with:
+  - `json.dumps(obj, separators=(",", ":"), ensure_ascii=False, sort_keys=True)`
+- `exp` is RFC3339 with Z:
+  - `exp_iso = exp_dt.isoformat().replace("+00:00", "Z")`
+
+This matches Rust `chrono::DateTime<Utc>` + `serde_json` and is required for signature verification.
+
+**Running the Demo**
+
+```bash
+cd ~/offsec-shield
+OFFSEC_SK_HEX=120e1c86ba243e4c094da258c9a9e9fc5137cc19057b084915683303260ce90c \
+OFFSEC_DATA_DIR=apps/portal-ext/data-offsec \
+.venv/bin/python integration/offsec_event_demo_authtoken.py
+```
+
+Portal returns:
+- `status: "ok"`
+- `incident_id: inc-20251128-080708.002` (example)
+- `receipt_id: blake3:588a...fda` (handle into the ledger)
+
+**Inspecting Incidents**
+
+```bash
+curl http://localhost:9115/api/offsec/incidents/<incident_id> | jq .
+```
+
+**Notes**
+- Rotating the OffSec key requires generating a new `OFFSEC_SK_HEX`/VK pair and updating `trusted_issuers.json`.
+- `receipt_id` is the canonical handle to locate this event in the Civilization Ledger.
+
+---
+
 Hand this doc to a teammate — they should be able to run the stack, trigger a detection, verify a proof, and diagnose common failures.
