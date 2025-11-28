@@ -8,6 +8,7 @@ import {
   AnchorEvent,
 } from '@/types/events';
 import { Receipt } from '@/types/receipts';
+import { OFFSEC_WS_URL } from '@/config/offsec';
 
 export type OffsecMessage =
   | { type: 'threat_event'; data: ThreatEvent }
@@ -20,11 +21,6 @@ export type OffsecMessage =
   | { type: 'mesh.proof_received'; data: MeshProofReceived }
   | { type: string; data: unknown };
 
-const API_URL = process.env.NEXT_PUBLIC_OFFSEC_API_URL || 'http://localhost:9115';
-const WS_URL =
-  process.env.NEXT_PUBLIC_OFFSEC_WS ||
-  `${API_URL.replace(/^http/i, 'ws')}/offsec/ws`;
-
 export function connectWebSocket(
   onMessage: (msg: OffsecMessage) => void,
   onOpen?: () => void,
@@ -34,9 +30,12 @@ export function connectWebSocket(
   let socket: WebSocket | null = null;
 
   const connect = () => {
-    socket = new WebSocket(WS_URL);
+    socket = new WebSocket(OFFSEC_WS_URL);
 
-    socket.onopen = () => onOpen?.();
+    socket.onopen = () => {
+      console.log('[offsec] ws open', OFFSEC_WS_URL);
+      onOpen?.();
+    };
     socket.onmessage = (event) => {
       try {
         const payload = JSON.parse(event.data) as OffsecMessage;

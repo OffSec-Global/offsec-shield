@@ -1,11 +1,11 @@
 import { ActionUpdate } from '@/types/events';
 import { Receipt } from '@/types/receipts';
+import { OFFSEC_HTTP_BASE } from '@/config/offsec';
 
-const API_URL = process.env.NEXT_PUBLIC_OFFSEC_API_URL || 'http://localhost:9115';
 const ACTION_TOKEN = process.env.NEXT_PUBLIC_OFFSEC_ACTION_TOKEN;
 
 export async function submitAction(action: ActionUpdate) {
-  const response = await fetch(`${API_URL}/offsec/action`, {
+  const response = await fetch(`${OFFSEC_HTTP_BASE}/action`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(action)
@@ -16,8 +16,8 @@ export async function submitAction(action: ActionUpdate) {
 
 export async function getReceipts(guardianId?: string): Promise<Receipt[]> {
   const url = guardianId
-    ? `${API_URL}/offsec/receipts?guardian_id=${encodeURIComponent(guardianId)}`
-    : `${API_URL}/offsec/receipts`;
+    ? `${OFFSEC_HTTP_BASE}/receipts?guardian_id=${encodeURIComponent(guardianId)}`
+    : `${OFFSEC_HTTP_BASE}/receipts`;
   const response = await fetch(url);
   if (!response.ok) throw new Error('Failed to fetch receipts');
   return response.json();
@@ -43,7 +43,7 @@ export async function applyAction(payload: ActionRequestPayload) {
   if (ACTION_TOKEN) {
     headers.Authorization = `Bearer ${ACTION_TOKEN}`;
   }
-  const res = await fetch(`${API_URL}/offsec/action/apply`, {
+  const res = await fetch(`${OFFSEC_HTTP_BASE}/action/apply`, {
     method: 'POST',
     headers,
     body: JSON.stringify(payload),
@@ -55,7 +55,7 @@ export async function applyAction(payload: ActionRequestPayload) {
 }
 
 export async function getCurrentRoot(): Promise<string> {
-  const response = await fetch(`${API_URL}/offsec/root`);
+  const response = await fetch(`${OFFSEC_HTTP_BASE}/root`);
   if (!response.ok) throw new Error('Failed to fetch root');
   const data = await response.json();
   return data.root || '';
