@@ -1,0 +1,275 @@
+# OpenGuard Configuration
+# Standardized threat detection and response configuration for OffSec Shield Guardian
+# Version: 1.0.0
+
+metadata:
+  name: "openguard-production"
+  version: "1.0.0"
+  guardian_id: "guardian-${HOSTNAME:-default}"
+  environment: "${DEPLOY_ENV:-dev}"
+  created_at: "2025-11-29T00:00:00Z"
+
+# Guardian Core Settings
+guardian:
+  # Unique identifier for this guardian instance
+  id: "${OFFSEC_GUARDIAN_ID:-guardian-default}"
+  
+  # Tags for filtering and grouping guardians
+  tags:
+    - "${DEPLOY_ENV:-dev}"
+    - "openguard"
+    - "${REGION:-default}"
+  
+  # Portal-Ext API endpoint
+  api_url: "${OFFSEC_PORTAL_URL:-http://localhost:9115}"
+  
+  # Authentication
+  auth:
+    # Capability token (base64-encoded JWT)
+    capability_token: "${OFFSEC_CAPABILITY_B64}"
+    
+    # JWT HS256 secret (shared with Portal-Ext)
+    jwt_hs256_secret: "${GUARDIAN_JWT_HS256_SECRET:-dev-secret}"
+    
+    # Ed25519 private key path for signing
+    jwt_private_key_path: "${GUARDIAN_JWT_PRIVATE_KEY_PATH:-config/dev-guardian.ed25519}"
+  
+  # Performance tuning
+  performance:
+    event_batch_size: 100
+    event_flush_interval_secs: 5
+    max_queue_size: 10000
+    worker_threads: 4
+
+# Log Sources Configuration
+log_sources:
+  ssh:
+    enabled: true
+    paths:
+      - "/var/log/auth.log"
+      - "/var/log/secure"
+    watch_mode: "tail"  # tail | poll | inotify
+    poll_interval_secs: 1
+    
+  nginx:
+    enabled: true
+    paths:
+      - "/var/log/nginx/access.log"
+      - "/var/log/nginx/error.log"
+    format: "combined"  # combined | json | custom
+    
+  firewall:
+    enabled: true
+    paths:
+      - "/var/log/ufw.log"
+      - "/var/log/iptables.log"
+    
+  portal:
+    enabled: true
+    api_url: "${VAULTMESH_URL:-http://localhost:9110}"
+    poll_interval_secs: 10
+    
+  syslog:
+    enabled: false
+    listen_addr: "0.0.0.0:514"
+    protocol: "udp"  # udp | tcp | both
+
+# Threat Detectors
+detectors:
+  # Global detector settings
+  global:
+    confidence_threshold: 0.7
+    aggregation_window_secs: 300
+    
+  # Enabled detectors
+  enabled:
+    - "brute_force"
+    - "scanner"
+    - "anomaly_simple"
+    - "rate_limit"
+    - "geo_anomaly"
+  
+  # Brute Force Detection
+  brute_force:
+    enabled: true
+    sources: ["ssh", "nginx"]
+    threshold_attempts: 5
+    window_secs: 300
+    lockout_duration_secs: 3600
+    confidence_boost_per_attempt: 0.15
+    
+  # Port Scan / Vulnerability Scanner Detection
+  scanner:
+    enabled: true
+    sources: ["firewall", "nginx"]
+    threshold_ports: 10
+    window_secs: 60
+    suspicious_user_agents:
+      - "Nmap"
+      - "masscan"
+      - "nikto"
+      - "sqlmap"
+      - "gobuster"
+      - "dirbuster"
+    suspicious_paths:
+      - "/.git"
+      - "/.env"
+      - "/admin"
+      - "/phpMyAdmin"
+      - "/wp-admin"
+    
+  # Simple Anomaly Detection (Statistical)
+  anomaly_simple:
+    enabled: true
+    sources: ["ssh", "nginx", "portal"]
+    baseline_window_secs: 3600
+    deviation_threshold: 3.0  # Standard deviations
+    min_samples: 100
+    
+  # Rate Limiting Detection
+  rate_limit:
+    enabled: true
+    sources: ["nginx", "portal"]
+    threshold_requests: 100
+    window_secs: 60
+    per_source: true  # Per source IP
+    
+  # Geolocation Anomaly
+  geo_anomaly:
+    enabled: false  # Requires GeoIP database
+    sources: ["ssh", "nginx"]
+    allowed_countries: []  # Empty = all allowed
+    blocked_countries: ["CN", "RU", "KP"]  # ISO codes
+    suspicious_travel_speed_kmh: 1000  # Impossible travel detection
+
+# Response Actions
+actions:
+  # Global action settings
+  global:
+    require_approval: true
+    approval_timeout_secs: 300
+    max_concurrent_actions: 10
+    
+  # Allowed actions
+  allowed:
+    - "block_ip"
+    - "alert_human"
+    - "quarantine"
+    - "rate_limit"
+    - "log_only"
+  
+  # Action-specific configuration
+  block_ip:
+    enabled: true
+    method: "iptables"  # iptables | nftables | cloudflare
+    default_duration_secs: 3600
+    max_duration_secs: 86400
+    whitelist:
+      - "127.0.0.1"
+      - "::1"
+      - "${OPERATOR_IP}"
+    
+  alert_human:
+    enabled: true
+    channels:
+      - type: "webhook"
+        url: "${ALERT_WEBHOOK_URL}"
+      - type: "email"
+        to: "${ALERT_EMAIL}"
+      - type: "slack"
+        webhook_url: "${SLACK_WEBHOOK_URL}"
+    
+  quarantine:
+    enabled: false  # Stub implementation
+    quarantine_network: "10.99.99.0/24"
+    
+  rate_limit:
+    enabled: true
+    method: "nginx"  # nginx | haproxy | custom
+    default_limit: "10r/s"
+
+# Action Server (for receiving action execution requests)
+action_server:
+  enabled: true
+  listen: "0.0.0.0:${OFFSEC_ACTION_SERVER_PORT:-9120}"
+  tls:
+    enabled: false
+    cert_path: ""
+    key_path: ""
+  auth:
+    require_capability: true
+    allowed_issuers:
+      - "did:vm:node:sovereign"
+      - "${TRUSTED_ISSUER_DID}"
+
+# Metrics & Observability
+observability:
+  metrics:
+    enabled: true
+    export_interval_secs: 60
+    prometheus_port: 9121
+    
+  tracing:
+    enabled: false
+    endpoint: "${JAEGER_ENDPOINT}"
+    
+  logging:
+    format: "json"  # json | text
+    level: "${LOG_LEVEL:-info}"  # debug | info | warn | error
+    output: "stdout"  # stdout | file | both
+    file_path: "/var/log/guardian/guardian.log"
+    rotation:
+      max_size_mb: 100
+      max_files: 10
+
+# Integration with Civilization Ledger
+ledger:
+  enabled: true
+  portal_url: "${OFFSEC_PORTAL_URL:-http://localhost:9115}"
+  emit_receipts: true
+  proof_generation: true
+  merkle_sync_interval_secs: 60
+
+# Mesh Federation
+mesh:
+  enabled: false
+  node_id: "${MESH_NODE_ID}"
+  peers: "${MESH_PEERS}"  # Comma-separated peer URLs
+  gossip_interval_secs: 30
+  proof_sync_enabled: true
+
+# Storage
+storage:
+  data_dir: "${OFFSEC_DATA_DIR:-./data-guardian}"
+  max_disk_usage_gb: 10
+  retention_days: 30
+  backup:
+    enabled: false
+    interval_secs: 3600
+    destination: "s3://backup-bucket/guardian"
+
+# Rate Limiting (Guardian self-protection)
+rate_limits:
+  ingestion:
+    max_events_per_sec: 1000
+    burst_size: 5000
+  
+  detection:
+    max_detections_per_sec: 100
+  
+  actions:
+    max_actions_per_min: 10
+
+# Feature Flags
+features:
+  ai_assisted_detection: false
+  auto_remediation: false
+  threat_intelligence_lookup: false
+  behavioral_profiling: false
+
+# Development & Debug
+debug:
+  dry_run: false
+  log_all_events: false
+  disable_actions: false
+  profiling_enabled: false

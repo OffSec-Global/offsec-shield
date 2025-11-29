@@ -1,0 +1,147 @@
+╔══════════════════════════════════════════════════════════════════════════╗
+║                    OPENGUARD QUICK REFERENCE                             ║
+║                    OffSec Shield Guardian Configuration                  ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+📋 FILES
+────────────────────────────────────────────────────────────────────────────
+config/openguard.toml         → Full reference template
+config/openguard.yaml         → YAML alternative  
+config/openguard-prod.toml    → Production hardened
+config/OPENGUARD.md           → Complete documentation
+scripts/validate-openguard.py → Configuration validator
+
+🚀 QUICK START
+────────────────────────────────────────────────────────────────────────────
+# Development
+cp config/openguard.toml config/dev.toml
+export GUARDIAN_CONFIG=config/dev.toml
+export OFFSEC_GUARDIAN_ID="guardian-dev"
+export OFFSEC_PORTAL_URL="http://localhost:9115"
+export GUARDIAN_JWT_HS256_SECRET="dev-secret"
+poetry run guardian run
+
+# Production
+cp config/openguard-prod.toml config/prod.toml
+# Edit prod.toml with real values
+poetry run python scripts/validate-openguard.py config/prod.toml --strict
+export GUARDIAN_CONFIG=config/prod.toml
+poetry run guardian run
+
+🔐 REQUIRED ENVIRONMENT VARIABLES
+────────────────────────────────────────────────────────────────────────────
+OFFSEC_GUARDIAN_ID           → Unique guardian identifier
+OFFSEC_PORTAL_URL            → Portal-Ext API endpoint
+GUARDIAN_JWT_HS256_SECRET    → Shared secret with Portal-Ext
+
+📊 CONFIGURATION SECTIONS
+────────────────────────────────────────────────────────────────────────────
+[guardian]           → Core identity, API, auth
+[log_sources.*]      → SSH, Nginx, Firewall, Portal, Syslog
+[detectors.*]        → Threat detection rules
+[actions.*]          → Response actions (block_ip, alert, etc.)
+[action_server]      → HTTP server for action requests
+[observability.*]    → Metrics, logging, tracing
+[ledger]             → Receipt emission, proofs
+[mesh]               → Federation (experimental)
+[storage]            → Data retention, backups
+[rate_limits]        → Self-protection thresholds
+[features]           → Feature flags
+[debug]              → Development settings
+
+🔍 VALIDATION
+────────────────────────────────────────────────────────────────────────────
+# Validate config
+poetry run python scripts/validate-openguard.py config/dev.toml
+
+# Strict mode (warnings = errors)
+poetry run python scripts/validate-openguard.py config/prod.toml --strict
+
+# Test config loading
+poetry run python -c "
+from guardian.config import config
+print(f'Guardian ID: {config.get(\"guardian.id\")}')
+print(f'Detectors: {config.get(\"detectors.enabled\")}')
+"
+
+🛡️ DETECTORS
+────────────────────────────────────────────────────────────────────────────
+brute_force         → Failed login attempts (SSH, web)
+scanner             → Port scans, vulnerability scanners
+anomaly_simple      → Statistical anomalies
+rate_limit          → Request rate violations
+geo_anomaly         → Geolocation-based threats
+
+⚡ ACTIONS
+────────────────────────────────────────────────────────────────────────────
+block_ip            → Firewall blocking (iptables/nftables)
+alert_human         → Webhook/email/Slack notifications
+quarantine          → Network isolation (stub)
+rate_limit          → Apply rate limiting
+log_only            → Passive logging
+
+📈 OBSERVABILITY
+────────────────────────────────────────────────────────────────────────────
+# Prometheus metrics
+http://localhost:9121/metrics
+
+# Logs (JSON format)
+journalctl -u guardian -f | jq .
+
+# Action server
+curl http://localhost:9120/health
+
+✅ PRODUCTION CHECKLIST
+────────────────────────────────────────────────────────────────────────────
+[ ] Unique guardian.id per instance
+[ ] Strong GUARDIAN_JWT_HS256_SECRET (not "dev-secret")
+[ ] IP whitelist in actions.block_ip.whitelist
+[ ] Metrics enabled (observability.metrics.enabled = true)
+[ ] Appropriate detectors.global.confidence_threshold (0.7-0.9)
+[ ] actions.global.require_approval (true for manual, false for auto)
+[ ] Proper log retention (storage.retention_days)
+[ ] Debug flags disabled (debug.*)
+[ ] TLS configured if exposed (action_server.tls)
+[ ] Alert channels configured (actions.alert_human.channels)
+
+🐛 TROUBLESHOOTING
+────────────────────────────────────────────────────────────────────────────
+Config not loading:
+  → export GUARDIAN_CONFIG=/absolute/path/to/config.toml
+
+Environment vars not expanding:
+  → Ensure vars exported before running guardian
+  → Use ${VAR:-default} syntax for defaults
+
+Action server won't start:
+  → Check port: lsof -i :9120
+  → Verify action_server.enabled = true
+
+No detections:
+  → Check log_sources.*.enabled
+  → Verify log file paths exist
+  → Lower detectors.global.confidence_threshold
+
+📚 DOCUMENTATION
+────────────────────────────────────────────────────────────────────────────
+config/OPENGUARD.md              → Full configuration guide
+config/OPENGUARD_SUMMARY.md      → This summary
+AGENT.md                         → Operational handbook
+docs/OPERATOR_HANDBOOK.md        → Operations runbook
+
+🔗 INTEGRATION
+────────────────────────────────────────────────────────────────────────────
+# Guardian reads config automatically
+from guardian.config import config
+guardian_id = config.get("guardian.id")
+api_url = config.get("guardian.api_url")
+detectors = config.get("detectors.enabled", [])
+
+# Override via environment
+export GUARDIAN_CONFIG=config/custom.toml
+export OFFSEC_PORTAL_URL=https://portal.mesh.local
+
+╔══════════════════════════════════════════════════════════════════════════╗
+║  OpenGuard v1.0.0 - Standardized Guardian Configuration                 ║
+║  Created: 2025-11-29 | Status: Production Ready                         ║
+╚══════════════════════════════════════════════════════════════════════════╝

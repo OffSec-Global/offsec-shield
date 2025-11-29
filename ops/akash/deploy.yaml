@@ -1,0 +1,80 @@
+---
+# OffSec Shield - Akash Network Deployment
+# Lightweight Guardian Runner Node
+#
+# Deploy with: akash tx deployment create deploy.yaml --from wallet
+#
+# This runs:
+#   - Portal-Ext (receipts ingest, mesh sync)
+#   - Guardian (threat detection)
+#   - Mesh-Daemon (federation)
+
+version: "2.0"
+
+services:
+  offsec-runner:
+    image: ghcr.io/vaultmesh/offsec-shield:latest  # Build and push this
+    env:
+      # Node Identity (override per deployment)
+      - OFFSEC_MESH_NODE_ID=shield-akash-001
+      - OFFSEC_LISTEN=0.0.0.0:9115
+      - OFFSEC_DATA_DIR=/data
+
+      # JWT Secret (inject via Akash secrets or env)
+      - OFFSEC_JWT_HS256_SECRET=${OFFSEC_JWT_SECRET}
+      - GUARDIAN_JWT_HS256_SECRET=${GUARDIAN_JWT_SECRET}
+
+      # Mesh Configuration
+      - OFFSEC_MESH_INTERVAL_SECONDS=60
+      - OFFSEC_MESH_RECEIPTS_LIMIT=10
+
+      # Peers (bunker-de as primary, gamma as secondary)
+      - OFFSEC_MESH_PEERS=[{"id":"shield-bunker","url":"http://134.122.64.228:9115","pubkey":"BUNKER_PUBKEY"},{"id":"shield-gamma","url":"http://gamma.mesh.local:9115","pubkey":"GAMMA_PUBKEY"}]
+
+      # Guardian Settings
+      - OFFSEC_GUARDIAN_ID=guardian-akash-001
+      - OFFSEC_PORTAL_URL=http://localhost:9115
+
+    expose:
+      - port: 9115
+        as: 9115
+        to:
+          - global: true
+        accept:
+          - "shield-*.vaultmesh.org"
+
+    params:
+      storage:
+        data:
+          mount: /data
+          readOnly: false
+
+profiles:
+  compute:
+    offsec-runner:
+      resources:
+        cpu:
+          units: 0.5
+        memory:
+          size: 512Mi
+        storage:
+          - size: 2Gi
+            name: data
+
+  placement:
+    dcloud:
+      attributes:
+        region: us-west
+      signedBy:
+        anyOf:
+          - akash
+      pricing:
+        offsec-runner:
+          denom: uakt
+          amount: 100  # ~$0.10/hour
+
+deployment:
+  offsec-runner:
+    dcloud:
+      profile: offsec-runner
+      count: 1

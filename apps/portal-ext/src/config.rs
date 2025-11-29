@@ -47,9 +47,17 @@ impl OffsecConfig {
             capability_audience: env::var("OFFSEC_CAP_AUD")
                 .unwrap_or_else(|_| "offsec-portal".to_string()),
             jwt_public_key_pem: env::var("OFFSEC_JWT_PUBLIC_KEY").ok(),
-            jwt_hs256_secret: env::var("OFFSEC_JWT_HS256_SECRET")
-                .ok()
-                .or_else(|| Some("dev-secret".to_string())),
+            jwt_hs256_secret: {
+                let secret = env::var("OFFSEC_JWT_HS256_SECRET")
+                    .expect("OFFSEC_JWT_HS256_SECRET must be set - generate with: openssl rand -hex 32");
+                if secret == "dev-secret" {
+                    panic!("OFFSEC_JWT_HS256_SECRET cannot be 'dev-secret' in production");
+                }
+                if secret.len() < 32 {
+                    tracing::warn!("JWT secret is shorter than recommended (32+ chars)");
+                }
+                Some(secret)
+            },
             data_dir: env::var("OFFSEC_DATA_DIR").unwrap_or_else(|_| "data-offsec".to_string()),
             guardian_url: env::var("OFFSEC_GUARDIAN_URL").ok(),
             mesh: None,

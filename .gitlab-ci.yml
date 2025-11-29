@@ -1,6 +1,7 @@
 stages:
   - ping
   - build
+  - deploy
 
 # Smoke test - runs on every push
 ping_brick:
@@ -9,7 +10,7 @@ ping_brick:
     - brick
   image: alpine:latest
   script:
-    - echo "🧱 Running on BRICK runner!"
+    - echo "Running on BRICK runner!"
     - hostname
     - cat /etc/os-release | head -3
 
@@ -57,3 +58,22 @@ node_build:
       - .next/
     expire_in: 7 days
     when: on_success
+
+# Deploy to GAMMA - runs on gamma-runner (shell executor)
+deploy_gamma:
+  stage: deploy
+  tags:
+    - gamma
+    - deploy
+  script:
+    - echo "Deploying mesh-stack on GAMMA..."
+    - cd /home/sovereign/mesh-stack
+    - docker compose pull --quiet || true
+    - docker compose up -d --remove-orphans
+    - docker compose ps
+    - echo "Deployment complete!"
+  environment:
+    name: production
+    url: http://100.80.246.127
+  rules:
+    - if: $CI_COMMIT_BRANCH == "master"

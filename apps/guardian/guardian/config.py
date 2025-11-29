@@ -60,13 +60,13 @@ class Config:
                 "id": "guardian-dev",
                 "tags": ["dev"],
                 "api_url": "http://localhost:9115",
-                "capability_token": "dev-token",
+                "capability_token": None,  # Must be set via env
                 "jwt_private_key_path": str(
                     Path(__file__).resolve().parents[3]
                     / "config"
                     / "dev-guardian.ed25519"
                 ),
-                "jwt_hs256_secret": "dev-secret",
+                "jwt_hs256_secret": None,  # REQUIRED: Set GUARDIAN_JWT_HS256_SECRET env var
             },
             "detectors": {"enabled": ["brute_force", "scanner", "anomaly_simple"]},
             "actions": {

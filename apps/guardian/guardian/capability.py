@@ -21,7 +21,12 @@ class CapabilityIssuer:
         self.guardian_id = guardian_id
         self.allowed_actions = allowed_actions
         self.private_key = private_key
-        self.hs256_secret = hs256_secret or "dev-secret"
+        if not hs256_secret or hs256_secret == "dev-secret":
+            raise ValueError(
+                "GUARDIAN_JWT_HS256_SECRET must be set and cannot be 'dev-secret'. "
+                "Generate with: openssl rand -hex 32"
+            )
+        self.hs256_secret = hs256_secret
         self.audience = audience
         self._cached_token: Optional[str] = None
         self._expires_at: int = 0
@@ -68,10 +73,15 @@ def load_private_key() -> Optional[str]:
 def build_capability_issuer() -> CapabilityIssuer:
     guardian_id = resolve_guardian_id()
     allowed_actions = config.get("actions.allowed", [])
-    hs_secret = os.getenv(
-        "GUARDIAN_JWT_HS256_SECRET",
-        config.get("guardian.jwt_hs256_secret", "dev-secret"),
-    )
+
+    # Require explicit secret - no fallback to insecure defaults
+    hs_secret = os.getenv("GUARDIAN_JWT_HS256_SECRET") or config.get("guardian.jwt_hs256_secret")
+    if not hs_secret:
+        raise ValueError(
+            "GUARDIAN_JWT_HS256_SECRET environment variable must be set. "
+            "Generate with: openssl rand -hex 32"
+        )
+
     private_key = load_private_key()
     audience = os.getenv("GUARDIAN_CAP_AUD", "offsec-portal")
     return CapabilityIssuer(
