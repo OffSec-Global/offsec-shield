@@ -1,0 +1,42 @@
+stages:
+  - ping
+  - build
+
+# Test that BRICK runner works
+ping_brick:
+  stage: ping
+  tags:
+    - brick
+  image: alpine:latest
+  script:
+    - echo "🧱 Running on BRICK runner!"
+    - hostname
+    - cat /etc/os-release | head -3
+
+# Rust build for portal-ext
+rust_build:
+  stage: build
+  tags:
+    - brick
+    - rust
+  image: rust:1.83
+  script:
+    - rustc --version
+    - cargo --version
+    - echo "Rust toolchain ready"
+  rules:
+    - when: manual
+
+# Node build for UI
+node_build:
+  stage: build
+  tags:
+    - brick
+    - nodejs
+  image: node:22-alpine
+  script:
+    - node --version
+    - npm --version
+    - echo "Node toolchain ready"
+  rules:
+    - when: manual
