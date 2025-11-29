@@ -2,7 +2,7 @@ stages:
   - ping
   - build
 
-# Test that BRICK runner works
+# Smoke test - runs on every push
 ping_brick:
   stage: ping
   tags:
@@ -13,30 +13,47 @@ ping_brick:
     - hostname
     - cat /etc/os-release | head -3
 
-# Rust build for portal-ext
+# Rust build - auto runs after ping
 rust_build:
   stage: build
   tags:
     - brick
     - rust
-  image: rust:1.83
+  image: rust:1.83-slim
+  cache:
+    key: "cargo-${CI_COMMIT_REF_SLUG}"
+    paths:
+      - target/
+      - /usr/local/cargo/registry/
+      - /usr/local/cargo/git/
   script:
     - rustc --version
     - cargo --version
-    - echo "Rust toolchain ready"
-  rules:
-    - when: manual
+    - echo "Rust toolchain ready - add real build commands here"
+  artifacts:
+    paths:
+      - target/release/
+    expire_in: 7 days
+    when: on_success
 
-# Node build for UI
+# Node build - auto runs after ping
 node_build:
   stage: build
   tags:
     - brick
     - nodejs
   image: node:22-alpine
+  cache:
+    key: "npm-${CI_COMMIT_REF_SLUG}"
+    paths:
+      - node_modules/
   script:
     - node --version
     - npm --version
-    - echo "Node toolchain ready"
-  rules:
-    - when: manual
+    - echo "Node toolchain ready - add real build commands here"
+  artifacts:
+    paths:
+      - dist/
+      - .next/
+    expire_in: 7 days
+    when: on_success
