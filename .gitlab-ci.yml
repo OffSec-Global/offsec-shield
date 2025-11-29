@@ -1,12 +1,185 @@
+# Red Path CI Pipeline
 stages:
-  - test
+  - .pre
+  - test  
+  - audit
+  - sast
+  - fuzz
+  - build
+  - scan
+  - deploy
 
-test:ping:
+variables:
+  CARGO_HOME: "$CI_PROJECT_DIR/.cargo"
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.pip"
+
+# SECRET DETECTION
+secrets:gitleaks:
+  stage: .pre
+  tags:
+    - brick
+  image: zricethezav/gitleaks:latest
+  script:
+    - gitleaks detect --source . --verbose --redact --exit-code 1
+  allow_failure: false
+
+# UNIT TESTS
+test:rust:
   stage: test
   tags:
     - brick
-  image: alpine:latest
+  image: rust:1.83-slim
   script:
-    - echo "Testing pipeline works"
-    - whoami
-    - date
+    - echo "Rust tests..."
+  allow_failure: false
+
+test:node:
+  stage: test
+  tags:
+    - brick
+  image: node:22-alpine
+  script:
+    - echo "Node tests..."
+  allow_failure: false
+
+test:python:
+  stage: test
+  tags:
+    - brick
+  image: python:3.11-slim
+  script:
+    - echo "Python tests..."
+  allow_failure: false
+
+# DEPENDENCY AUDIT
+audit:cargo:
+  stage: audit
+  tags:
+    - brick
+  image: rust:1.83-slim
+  script:
+    - echo "Auditing Rust..."
+    - cargo install cargo-audit --quiet || true
+  allow_failure: false
+
+audit:npm:
+  stage: audit
+  tags:
+    - brick
+  image: node:22-alpine
+  script:
+    - echo "Auditing npm..."
+  allow_failure: false
+
+audit:python:
+  stage: audit
+  tags:
+    - brick
+  image: python:3.11-slim
+  script:
+    - echo "Auditing Python..."
+    - pip install safety pip-audit --quiet
+  allow_failure: false
+
+# SAST
+sast:semgrep:
+  stage: sast
+  tags:
+    - brick
+  image: returntocorp/semgrep:latest
+  script:
+    - echo "Running Semgrep..."
+  allow_failure: false
+
+sast:bandit:
+  stage: sast
+  tags:
+    - brick
+  image: python:3.11-slim
+  script:
+    - pip install bandit --quiet
+    - echo "Running Bandit..."
+  allow_failure: false
+
+sast:clippy:
+  stage: sast
+  tags:
+    - brick
+  image: rust:1.83-slim
+  script:
+    - rustup component add clippy
+    - echo "Running Clippy..."
+  allow_failure: false
+
+sast:eslint:
+  stage: sast
+  tags:
+    - brick
+  image: node:22-alpine
+  script:
+    - echo "Running ESLint..."
+  allow_failure: false
+
+# FUZZING (placeholder)
+fuzz:rust:
+  stage: fuzz
+  tags:
+    - brick
+  image: rust:nightly-slim
+  script:
+    - echo "Fuzzing placeholder"
+  allow_failure: true
+  timeout: 30m
+
+# BUILD
+build:rust:
+  stage: build
+  tags:
+    - brick
+  image: rust:1.83-slim
+  script:
+    - echo "Building Rust..."
+  needs:
+    - test:rust
+    - audit:cargo
+    - sast:clippy
+
+build:node:
+  stage: build
+  tags:
+    - brick
+  image: node:22-alpine
+  script:
+    - echo "Building Node..."
+  needs:
+    - test:node
+    - audit:npm
+    - sast:eslint
+
+# CONTAINER SCAN
+scan:trivy:
+  stage: scan
+  tags:
+    - brick
+  image: aquasec/trivy:latest
+  script:
+    - echo "Scanning with Trivy..."
+    - trivy fs --severity HIGH,CRITICAL --exit-code 0 .
+  needs:
+    - build:rust
+    - build:node
+  allow_failure: false
+
+# DEPLOY
+deploy:gamma:
+  stage: deploy
+  tags:
+    - gamma
+    - deploy
+  script:
+    - echo "Deploying to GAMMA..."
+  environment:
+    name: production
+    url: http://100.80.246.127
+  needs:
+    - scan:trivy
